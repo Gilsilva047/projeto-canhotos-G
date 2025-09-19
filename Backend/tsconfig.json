@@ -1,25 +1,18 @@
 {
   "compilerOptions": {
-    // Diretório de saída para os arquivos compilados
     "outDir": "./dist",
-
-    // Configurações de Módulo e Ambiente
+    "rootDir": "./src",
     "module": "commonjs",
-    "target": "esnext",
-    "esModuleInterop": true, // <-- Linha adicionada para compatibilidade de módulos
+    "target": "ES2022",
+    "esModuleInterop": true,
     "moduleDetection": "force",
-    
-    // Saídas Adicionais para Debugging
     "sourceMap": true,
-    
-    // Opções de Checagem de Tipo Mais Rígidas
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
-    // Opções Recomendadas
-    "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "skipLibCheck": true
-  }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -14,7 +14,7 @@ import jwt = require('jsonwebtoken');
 import { body, validationResult } from 'express-validator';
 
 const app = express();
-const port = 4000;
+const PORT = process.env.PORT || 4000;
 
 // === CONFIGURAÇÃO DO MULTER ===
 const uploadDir = path.join(__dirname, '..', 'uploads');
@@ -311,7 +311,7 @@ app.get('/uploads', verificarToken, (req: Request, res: Response) => {
     // Se o usuário logado for COLABORADOR ou ADMIN, ele pode ver todos ou filtrar por um usuario_id específico
     else if ((usuario_role_logado === 'colaborador' || usuario_role_logado === 'admin') && usuario_id) {
         sql += ` AND u.usuario_id = ?`;
-        params.push(usuario_id);
+        params.push(Number(usuario_id));
     }
     // Se for colaborador/admin e não houver usuario_id especificado, ele vê todos (nenhum AND adicional aqui)
 
@@ -322,7 +322,7 @@ app.get('/uploads', verificarToken, (req: Request, res: Response) => {
     }
     if (data_entrega) {
         sql += ` AND STRFTIME('%Y-%m-%d', u.data_entrega) = ?`;
-        params.push(data_entrega);
+        params.push(String(data_entrega));
     }
 
     // --- Paginação ---
@@ -447,7 +447,7 @@ process.on('SIGINT', () => {
 });
 
 // === INICIAR SERVIDOR ===
-app.listen(port, () => {
-    console.log(`Servidor rodando em http://localhost:${port}`);
-    console.log(`Acesse o frontend em http://localhost:${port}/Frontend/login.html`);
+app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Acesse o frontend em http://localhost:${PORT}/Frontend/login.html`);
 });
