@@ -1,4 +1,4 @@
-// src/index.ts (CÓDIGO COMPLETO E FINAL - LENDO CREDENCIAIS DO .ENV)
+// src/index.ts (CÓDIGO COMPLETO E FINAL - COM FRONTEND INTEGRADO)
 
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -53,24 +53,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // === CONFIGURAÇÃO DO CORS ===
-const whitelist = [
-    'http://localhost:4000',
-    'http://localhost:5173',
-    'http://127.0.0.1:5500', // Live Server do VSCode
-    'http://seu-frontend.com', // Seu domínio de produção
-    'https://seucanhotoapp.com' // Exemplo de frontend em produção
-];
-
 const corsOptions = {
     origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-        if (!origin || whitelist.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('Acesso negado pelo CORS'));
-        }
+        // Permite qualquer origem em produção (Render) ou localhost
+        callback(null, true);
     }
 };
 app.use(cors(corsOptions));
+
+// === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
+const frontendPath = path.join(__dirname, '..', 'Frontend');
+app.use('/Frontend', express.static(frontendPath));
+app.use('/assets', express.static(path.join(frontendPath, 'assets')));
+
+// Rota para servir a página de login na raiz
+app.get('/', (req: Request, res: Response) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 // === CONFIGURAÇÃO DO BANCO DE DADOS ===
 const db = new sqlite3.Database("meu_banco.db", (err) => {
@@ -110,7 +109,7 @@ const verificarToken = (req: Request, res: Response, next: NextFunction) => {
 // === MIDDLEWARE DE AUTORIZAÇÃO (Para admin específico) ===
 // Define seu email de administrador principal AQUI. Lido de variáveis de ambiente.
 // O segundo valor é um fallback para desenvolvimento se a variável não estiver definida.
-const MASTER_ADMIN_EMAIL = process.env.MASTER_ADMIN_EMAIL || 'admin@fallback.com'; 
+const MASTER_ADMIN_EMAIL = process.env.MASTER_ADMIN_EMAIL || 'givanildo.jose@kikos.com.br'; 
 
 const verificarMasterAdmin = (req: Request, res: Response, next: NextFunction) => {
     if (!req.usuario) {
@@ -166,7 +165,7 @@ db.serialize(() => {
 
             // --- SEU USUÁRIO MASTER ADMIN ---
             // A senha inicial é lida de uma variável de ambiente. Use um fallback seguro para dev.
-            const initialAdminPassword = process.env.MASTER_ADMIN_INITIAL_PASSWORD || 'default_dev_password'; 
+            const initialAdminPassword = process.env.MASTER_ADMIN_INITIAL_PASSWORD || 'admin123'; 
             bcrypt.hash(initialAdminPassword, 10).then(hashedPassword => { 
                 db.run("INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)",
                     ['Givanildo Jose Admin', MASTER_ADMIN_EMAIL, hashedPassword, 'admin'], function(err) {
@@ -408,20 +407,15 @@ app.get("/usuarios", verificarToken, (req: Request, res: Response) => {
 // === ARQUIVOS ESTÁTICOS ===
 app.use('/uploads', express.static(uploadDir));
 
-// --- SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND (para deploy único) ---
-const frontendPath = path.join(__dirname, '..', 'Frontend');
-app.use(express.static(frontendPath));
-
-// Redireciona todas as rotas não API para o index.html do frontend
+// Fallback para SPAs - redireciona para o frontend em rotas não encontradas
 app.get('*', (req: Request, res: Response) => {
-    // Ignora rotas da API ou /uploads para não interferir
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    // Ignora rotas da API para não interferir
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/login') || req.path.startsWith('/cadastrar') || req.path.startsWith('/usuarios')) {
         return res.status(404).json({ error: 'Rota não encontrada' });
     }
-    // Assume que login.html é a página padrão se não houver um index.html
-    res.sendFile(path.join(frontendPath, 'login.html')); // Altera para login.html como padrão
+    // Serve o index.html para qualquer rota não API
+    res.sendFile(path.join(frontendPath, 'index.html'));
 });
-// --- FIM SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ---
 
 // === MIDDLEWARE DE ERROS ===
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -449,5 +443,5 @@ process.on('SIGINT', () => {
 // === INICIAR SERVIDOR ===
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
-    console.log(`Acesse o frontend em http://localhost:${PORT}/Frontend/login.html`);
+    console.log(`Acesse o frontend em http://localhost:${PORT}`);
 });
