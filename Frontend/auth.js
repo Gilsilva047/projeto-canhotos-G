@@ -1,6 +1,9 @@
-// Frontend/auth.js (MÓDULO ES6)
+// Frontend/auth.js (MÓDULO ES6 COMPLETO)
 
-export const API_BASE_URL = 'http://localhost:4000'; // Exporta a URL da API
+import { API_BASE_URL } from './config.js'; // Importa da configuração
+
+// Exporta a URL da API
+export { API_BASE_URL };
 
 // Função para exibir mensagens na UI (genérica)
 export function showPageMessage(elementId, msg, className = 'text-red-600') {
@@ -18,15 +21,16 @@ export function handleLogout() {
     localStorage.removeItem('userRole');
     localStorage.removeItem('userName');
     localStorage.removeItem('userId');
+    localStorage.removeItem('userEmail');
     alert('Você foi desconectado.');
-    window.location.href = window.location.origin + '/Frontend/index.html';
+    window.location.href = window.location.origin + '/';
 }
 
 // Função para fazer requisições autenticadas
 export async function authenticatedFetch(url, options = {}) {
     const token = localStorage.getItem('authToken');
     if (!token) {
-        handleLogout(); // Redireciona via handleLogout se o token sumir
+        handleLogout();
         throw new Error('Não autenticado');
     }
 
@@ -42,7 +46,7 @@ export async function authenticatedFetch(url, options = {}) {
     const response = await fetch(url, { ...options, headers });
 
     if (response.status === 401 || response.status === 403) {
-        handleLogout(); // Chama a função para logout e redirecionamento
+        handleLogout();
         throw new Error('Acesso não autorizado ou token inválido');
     }
 
@@ -65,7 +69,7 @@ export function initializeAuthAndUserDisplay() {
     const id = localStorage.getItem('userId');
 
     if (!token || !role) {
-        handleLogout(); // Redireciona para o login se não autenticado
+        handleLogout();
         return { isAuthenticated: false };
     }
 
@@ -75,7 +79,7 @@ export function initializeAuthAndUserDisplay() {
     if (userDisplayName && name) {
         userDisplayName.textContent = `Olá, ${name}`;
     } else if (userDisplayName && role) {
-        userDisplayName.textContent = `Olá, ${role}`; // Fallback se o nome não for salvo
+        userDisplayName.textContent = `Olá, ${role}`;
     }
 
     if (logoutButton) {
