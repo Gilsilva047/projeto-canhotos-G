@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Novo Usuário (Admin)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Cadastrar Novo Usuário</h2>
+        <div id="loading-message" class="text-center text-blue-500 hidden">Verificando permissões...</div>
+        <div id="auth-error" class="text-center text-red-500 hidden mb-4"></div>
+
+        <form id="cadastroForm" class="space-y-4 hidden">
+            <div>
+                <label for="nome" class="block text-sm font-medium text-gray-700">Nome</label>
+                <input
+                    type="text"
+                    id="nome"
+                    name="nome"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nome completo do novo usuário"
+                    required
+                />
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Email do novo usuário"
+                    required
+                />
+            </div>
+            <div>
+                <label for="senha" class="block text-sm font-medium text-gray-700">Senha</label>
+                <input
+                    type="password"
+                    id="senha"
+                    name="senha"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Senha para o novo usuário"
+                    required
+                />
+                <p class="text-xs text-gray-500 mt-1">A senha deve ter no mínimo 8 caracteres.</p>
+            </div>
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-700">Tipo de Usuário</label>
+                <select
+                    id="role"
+                    name="role"
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+                    <option value="transportador">Transportadora</option>
+                    <option value="colaborador">Colaborador</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+            <button
+                type="submit"
+                class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+                Cadastrar Usuário
+            </button>
+        </form>
+        <div id="message" class="mt-4 text-center"></div>
+        <button id="backToDashboard" class="w-full bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-4">Voltar para o Dashboard</button>
+    </div>
+    <script type="module" src="admin_cadastro.js"></script>
+</body>
+</html>

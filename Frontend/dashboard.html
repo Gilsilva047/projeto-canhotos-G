@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kikos Canhotos - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilos adicionais para o layout */
+        .grid-canhotos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .canhoto-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+            position: relative; 
+        }
+        .canhoto-card:hover {
+            transform: translateY(-5px);
+        }
+        .canhoto-image-container {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .canhoto-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .download-button-card {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .download-button-card:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-red-700 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Kikos Canhotos</h1>
+        <div class="flex items-center space-x-3">
+            <i class="fas fa-user-circle text-3xl"></i>
+            <span id="user-display-name" class="font-medium">Carregando...</span>
+            <button id="logout-button" class="ml-4 bg-red-800 hover:bg-red-900 text-white px-3 py-1 rounded-md text-sm">Sair</button>
+        </div>
+    </header>
+
+    <main class="flex-1 p-6">
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4 space-y-4 md:space-y-0">
+                <h2 class="text-xl font-semibold text-gray-800">Meus Canhotos</h2>
+                <div class="flex items-center space-x-4">
+                    
+                    
+                    <button id="cadastrar-usuario-button" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md font-semibold flex items-center space-x-2 hidden">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Cadastrar Usuário</span>
+                    </button>
+
+                    
+                    <button id="novo-canhoto-button" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md font-semibold flex items-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Novo Canhoto</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                    <label for="filter-nf" class="block text-sm font-medium text-gray-700">NF</label>
+                    <input type="text" id="filter-nf" placeholder="Número da NF" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="filter-data-entrega" class="block text-sm font-medium text-gray-700">Data de Entrega</label>
+                    <input type="date" id="filter-data-entrega" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="filter-usuario-envio-container" style="display: none;">
+                    <label for="filter-usuario-envio" class="block text-sm font-medium text-gray-700">Usuário de Envio</label>
+                    <select id="filter-usuario-envio" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+            </div>
+            <button id="aplicar-filtros-button" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-md">Aplicar Filtros</button>
+            <button id="limpar-filtros-button" class="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md">Limpar Filtros</button>
+        </div>
+
+        <div id="loading-message" class="text-center text-gray-600 mt-8" style="display: none;">
+            Carregando canhotos...
+        </div>
+        <div id="error-message" class="text-center text-red-600 mt-8" style="display: none;">
+            Não foi possível carregar os canhotos.
+        </div>
+        <div id="no-canhotos-message" class="text-center text-gray-500 mt-8" style="display: none;">
+            Nenhum canhoto encontrado com os filtros aplicados.
+        </div>
+
+        <div id="canhotos-grid" class="grid-canhotos">
+        </div>
+
+        <div class="flex justify-center items-center space-x-4 mt-8">
+            <button id="prev-page-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md" disabled>Anterior</button>
+            <span id="page-info" class="text-gray-700">Página 1 de 1</span>
+            <button id="next-page-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md" disabled>Próxima</button>
+        </div>
+    </main>
+
+    <script type="module" src="dashboard.js"></script>
+</body>
+</html>

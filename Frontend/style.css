@@ -1,0 +1,208 @@
+/* --- Reset Básico e Configurações Globais --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f0f2f5; /* Fundo geral sutil cinza */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* --- Estrutura Principal do Container de Login --- */
+.login-wrapper {
+    display: flex;
+    width: 750px; /* Largura para desktop */
+    height: 600px; /* Altura */
+    background-color: #ffffff; /* Fundo da caixa principal */
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(247, 247, 247, 0.1);
+    overflow: hidden; /* Garante que as bordas arredondadas sejam aplicadas corretamente */
+}
+
+.login-branding {
+    width: 45%;
+    /* Cor de fallback para navegadores que não suportam gradientes */
+    background-color: #d50000; 
+    
+    /* O gradiente que será exibido por cima da cor de fallback */
+    background-image: linear-gradient(135deg, #250804, #a82323);
+    
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+    flex-direction: column; 
+    position: relative; 
+    overflow: hidden; 
+}
+
+/* Padrão de fundo sutil para a área preta */
+.login-branding::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.5;
+    pointer-events: none; /* Garante que não interfere com cliques */
+}
+
+
+.branding-content {
+    position: relative; /* Para que o conteúdo fique acima do padrão */
+    z-index: 1; /* Garante que o conteúdo fique acima do padrão */
+}
+
+.branding-content .logo-image {
+    max-width: 450px; /* Tamanho da logo */
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.branding-content h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.branding-content p {
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: 0.8;
+    max-width: 80%; /* Limita a largura do texto para melhor leitura */
+    margin: 0 auto;
+}
+
+/* --- Coluna da Direita (Formulário) --- */
+.login-form-wrapper {
+    width: 55%;
+    padding: 60px;
+    background-color: #ffffff; /* Fundo branco para o formulário */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-form-wrapper h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.input-group .input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px 15px 15px 45px; /* Aumenta o padding esquerdo para o ícone */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-group input::placeholder {
+    color: #bbb;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #27ae60;
+    box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    background-color: #27ae60; /* Verde vibrante */
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+button[type="submit"]:hover {
+    background-color: #2ecc71; /* Verde mais claro no hover */
+}
+
+button[type="submit"]:active {
+    transform: scale(0.98);
+}
+
+.forgot-password {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #413838;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.error {
+    color: #e74c3c; /* Cor de erro vibrante */
+    text-align: center;
+    margin-top: 15px;
+    height: 20px; /* Garante espaço para a mensagem de erro sem "pular" o layout */
+    font-size: 0.9rem;
+}
+
+/* --- Responsividade Básica (Opcional, mas recomendado) --- */
+@media (max-width: 768px) {
+    .login-wrapper {
+        flex-direction: column; /* Pilha as colunas em telas menores */
+        width: 90%;
+        height: auto;
+    }
+
+    .login-branding,
+    .login-form-wrapper {
+        width: 100%;
+        padding: 40px 20px;
+    }
+
+    .login-branding {
+        border-bottom-left-radius: 0;
+        border-top-right-radius: 15px;
+    }
+
+    .login-form-wrapper {
+        border-top-left-radius: 0;
+        border-bottom-right-radius: 15px;
+    }
+
+    .branding-content h1 {
+        font-size: 2rem;
+    }
+}

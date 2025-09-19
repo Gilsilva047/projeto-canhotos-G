@@ -1,0 +1,12 @@
+# Ignorar pastas de Node.js
+node_modules/
+dist/
+
+# Ignorar o arquivo de variáveis de ambiente
+.env
+
+# Ignorar logs e caches
+npm-debug.log*
+.DS_Store # Mac specific
+*.sqlite # Seu banco de dados SQLite
+*.sqlite-journal # Journal do SQLite
