@@ -62,18 +62,42 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
-const frontendPath = path.resolve(__dirname, '../../Frontend');
-console.log('🔍 Frontend path hardcoded to:', frontendPath);
+const findFrontendPath = () => {
+    const possiblePaths = [
+        path.resolve(__dirname, '../Frontend'),
+        path.resolve(__dirname, '../../Frontend'),
+        path.resolve(__dirname, '../../../Frontend'),
+        path.resolve(__dirname, '../../../../Frontend')
+    ];
+    
+    for (const frontendPath of possiblePaths) {
+        const indexPath = path.join(frontendPath, 'index.html');
+        if (require('fs').existsSync(indexPath)) {
+            console.log('Frontend encontrado em:', frontendPath);
+            return frontendPath;
+        }
+    }
+    
+    console.log('Frontend não encontrado');
+    return null;
+};
 
-app.use('/Frontend', express.static(frontendPath));
-app.use('/assets', express.static(path.join(frontendPath, 'assets')));
+const frontendPath = findFrontendPath();
 
-// Rota para servir a página de login na raiz
-app.get('/', (req: Request, res: Response) => {
-    const indexPath = path.join(frontendPath, 'index.html');
-    console.log('🔍 Trying to serve index.html from:', indexPath);
-    res.sendFile(indexPath);
-});
+if (frontendPath) {
+    app.use('/Frontend', express.static(frontendPath));
+    app.use('/assets', express.static(path.join(frontendPath, 'assets')));
+
+    app.get('/', (req: Request, res: Response) => {
+        const indexPath = path.join(frontendPath, 'index.html');
+        console.log('Servindo index.html de:', indexPath);
+        res.sendFile(indexPath);
+    });
+} else {
+    app.get('/', (req: Request, res: Response) => {
+        res.status(500).send('Frontend não encontrado');
+    });
+}
 
 // === CONFIGURAÇÃO DO BANCO DE DADOS ===
 const db = new sqlite3.Database("meu_banco.db", (err) => {
