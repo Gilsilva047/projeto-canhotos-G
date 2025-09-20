@@ -62,7 +62,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
-const findFrontendPath = (): string | null => {
+const findFrontendPath = (): string => {
     const possiblePaths = [
         path.resolve(__dirname, '../Frontend'),
         path.resolve(__dirname, '../../Frontend'),
@@ -72,32 +72,39 @@ const findFrontendPath = (): string | null => {
     
     for (const frontendPath of possiblePaths) {
         const indexPath = path.join(frontendPath, 'index.html');
-        if (require('fs').existsSync(indexPath)) {
+        if (fs.existsSync(indexPath)) {
             console.log('Frontend encontrado em:', frontendPath);
             return frontendPath;
         }
     }
     
-    console.log('Frontend não encontrado');
-    return null;
+    console.log('Frontend não encontrado em nenhum caminho padrão');
+    // Retorna o caminho mais provável como fallback
+    return path.resolve(__dirname, '../../Frontend');
 };
 
 const frontendPath = findFrontendPath();
 
-if (frontendPath) {
-    app.use('/Frontend', express.static(frontendPath));
-    app.use('/assets', express.static(path.join(frontendPath, 'assets')));
+app.use('/Frontend', express.static(frontendPath));
+app.use('/assets', express.static(path.join(frontendPath, 'assets')));
 
-    app.get('/', (req: Request, res: Response) => {
-        const indexPath = path.join(frontendPath, 'index.html');
-        console.log('Servindo index.html de:', indexPath);
+// Rota para servir a página de login na raiz
+app.get('/', (req: Request, res: Response) => {
+    const indexPath = path.join(frontendPath, 'index.html');
+    console.log('Tentando servir index.html de:', indexPath);
+    
+    if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
-    });
-} else {
-    app.get('/', (req: Request, res: Response) => {
-        res.status(500).send('Frontend não encontrado');
-    });
-}
+    } else {
+        console.error('Arquivo index.html não encontrado em:', indexPath);
+        res.status(404).send(`
+            <h1>Frontend não encontrado</h1>
+            <p>O arquivo index.html não foi encontrado em: ${indexPath}</p>
+            <p>Verifique se a pasta Frontend está no local correto no servidor.</p>
+        `);
+    }
+});
+
 // === CONFIGURAÇÃO DO BANCO DE DADOS ===
 const db = new sqlite3.Database("meu_banco.db", (err) => {
     if (err) {
@@ -440,8 +447,18 @@ app.get('*', (req: Request, res: Response) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/login') || req.path.startsWith('/cadastrar') || req.path.startsWith('/usuarios')) {
         return res.status(404).json({ error: 'Rota não encontrada' });
     }
+    
     // Serve o index.html para qualquer rota não API
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    const indexPath = path.join(frontendPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send(`
+            <h1>Frontend não encontrado</h1>
+            <p>O arquivo index.html não foi encontrado em: ${indexPath}</p>
+            <p>Verifique se a pasta Frontend está no local correto no servidor.</p>
+        `);
+    }
 });
 
 // === MIDDLEWARE DE ERROS ===
