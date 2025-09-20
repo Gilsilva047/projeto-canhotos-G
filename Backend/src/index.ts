@@ -85,8 +85,8 @@ const findFrontendPath = (): string => {
 
 const frontendPath = findFrontendPath();
 
-app.use('/Frontend', express.static(frontendPath));
-app.use('/assets', express.static(path.join(frontendPath, 'assets')));
+// AJUSTE APLICADO AQUI: A pasta 'frontendPath' agora é a raiz do servidor.
+app.use(express.static(frontendPath));
 
 // Rota para servir a página de login na raiz
 app.get('/', (req: Request, res: Response) => {
@@ -141,25 +141,18 @@ const verificarToken = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // === MIDDLEWARE DE AUTORIZAÇÃO (Para admin específico) ===
-// Define seu email de administrador principal AQUI. Lido de variáveis de ambiente.
-// O segundo valor é um fallback para desenvolvimento se a variável não estiver definida.
 const MASTER_ADMIN_EMAIL = process.env.MASTER_ADMIN_EMAIL || 'givanildo.jose@kikos.com.br'; 
 
 const verificarMasterAdmin = (req: Request, res: Response, next: NextFunction) => {
     if (!req.usuario) {
         return res.status(401).json({ error: "Acesso negado. Usuário não autenticado." });
     }
-
-    // Primeiro, verifica se a role do usuário é 'admin'
     if (req.usuario.role !== 'admin') {
         return res.status(403).json({ error: "Acesso negado. Somente administradores podem realizar esta ação." });
     }
-
-    // Em seguida, verifica se o email do admin logado corresponde ao MASTER_ADMIN_EMAIL
     if (req.usuario.email !== MASTER_ADMIN_EMAIL) {
         return res.status(403).json({ error: "Acesso negado. Este usuário administrador não é o administrador principal para criar novos usuários." });
     }
-
     next();
 };
 
@@ -188,7 +181,6 @@ db.serialize(() => {
         if (err) console.error('Erro ao criar tabela uploads:', err.message);
     });
 
-    // Opcional: Adicionar dados de teste se o DB estiver vazio (para facilitar o teste)
     db.get("SELECT COUNT(*) as count FROM usuarios", (err, row: any) => {
         if (err) {
             console.error("Erro ao verificar usuários de teste:", err.message);
@@ -197,8 +189,6 @@ db.serialize(() => {
         if (row.count === 0) {
             console.log("Adicionando usuários de teste...");
 
-            // --- SEU USUÁRIO MASTER ADMIN ---
-            // A senha inicial é lida de uma variável de ambiente. Use um fallback seguro para dev.
             const initialAdminPassword = process.env.MASTER_ADMIN_INITIAL_PASSWORD || 'admin123'; 
             bcrypt.hash(initialAdminPassword, 10).then(hashedPassword => { 
                 db.run("INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)",
@@ -208,14 +198,13 @@ db.serialize(() => {
                     });
             });
 
-            // Colaborador de teste (só para ver as permissões)
             bcrypt.hash('123456', 10).then(hashedPassword => {
                 db.run("INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)",
                     ['Colaborador Teste', 'colaborador@teste.com', hashedPassword, 'colaborador'], function(err) {
                         if (err) console.error('Erro ao inserir colaborador de teste:', err.message);
                         else {
                             console.log('Colaborador de teste criado.');
-                            if (this && this.lastID) { // Verifica se this e lastID existem
+                            if (this && this.lastID) { 
                                 db.run("INSERT INTO uploads (usuario_id, nf, data_entrega, nome_arquivo) VALUES (?, ?, ?, ?)",
                                     [this.lastID, 'NF2', '2023-10-20', 'nf2_colaborador.png'],
                                     (err) => { if (err) console.error('Erro ao inserir upload de teste (colaborador):', err.message); });
@@ -227,14 +216,13 @@ db.serialize(() => {
                     });
             });
 
-            // Transportador de teste (só para ver as permissões)
             bcrypt.hash('admin123', 10).then(hashedPassword => {
                 db.run("INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?, ?, ?)",
                     ['Administrador Transp.', 'admin@teste.com', hashedPassword, 'transportador'], function(err) {
                         if (err) console.error('Erro ao inserir transportador de teste:', err.message);
                         else {
                             console.log('Transportador de teste criado.');
-                            if (this && this.lastID) { // Verifica se this e lastID existem
+                            if (this && this.lastID) { 
                                 db.run("INSERT INTO uploads (usuario_id, nf, data_entrega, nome_arquivo) VALUES (?, ?, ?, ?)",
                                     [this.lastID, 'NF1', '2023-10-26', 'nf1_transportador.png'],
                                     (err) => { if (err) console.error('Erro ao inserir upload de teste (transportador):', err.message); });
@@ -253,7 +241,7 @@ db.serialize(() => {
 app.post(
     "/cadastrar",
     verificarToken,
-    verificarMasterAdmin, // Agora verifica role 'admin' E se é o MASTER_ADMIN_EMAIL
+    verificarMasterAdmin, 
     [
         body('nome').trim().notEmpty().withMessage('O nome é obrigatório.'),
         body('email').isEmail().withMessage('Por favor, insira um email válido.').normalizeEmail(),
@@ -335,19 +323,14 @@ app.get('/uploads', verificarToken, (req: Request, res: Response) => {
     `;
     const params: (string | number | null)[] = [];
 
-    // LÓGICA DE USUÁRIOS:
-    // Se o usuário logado for TRANSPORTADOR, só pode ver os próprios uploads
     if (usuario_role_logado === 'transportador') {
         sql += ` AND u.usuario_id = ?`;
         params.push(usuario_id_logado);
     }
-    // Se o usuário logado for COLABORADOR ou ADMIN, ele pode ver todos ou filtrar por um usuario_id específico
     else if ((usuario_role_logado === 'colaborador' || usuario_role_logado === 'admin') && usuario_id) {
         sql += ` AND u.usuario_id = ?`;
         params.push(Number(usuario_id));
     }
-    // Se for colaborador/admin e não houver usuario_id especificado, ele vê todos (nenhum AND adicional aqui)
-
 
     if (nf) {
         sql += ` AND u.nf LIKE ?`;
@@ -358,7 +341,6 @@ app.get('/uploads', verificarToken, (req: Request, res: Response) => {
         params.push(String(data_entrega));
     }
 
-    // --- Paginação ---
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
     const offset = (pageNum - 1) * limitNum;
@@ -424,7 +406,6 @@ app.post(
 
 // === LISTAR USUÁRIOS (para o filtro de colaborador/admin) ===
 app.get("/usuarios", verificarToken, (req: Request, res: Response) => {
-    // Agora, apenas COLABORADORES ou ADMINS podem ter acesso a esta lista completa de usuários
     if (req.usuario!.role !== 'colaborador' && req.usuario!.role !== 'admin') {
         return res.status(403).json({ error: "Acesso negado. Apenas colaboradores ou administradores podem listar usuários para filtro." });
     }
@@ -438,17 +419,15 @@ app.get("/usuarios", verificarToken, (req: Request, res: Response) => {
     });
 });
 
-// === ARQUIVOS ESTÁTICOS ===
+// === ARQUIVOS ESTÁTICOS DE UPLOAD ===
 app.use('/uploads', express.static(uploadDir));
 
 // Fallback para SPAs - redireciona para o frontend em rotas não encontradas
 app.get('*', (req: Request, res: Response) => {
-    // Ignora rotas da API para não interferir
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/login') || req.path.startsWith('/cadastrar') || req.path.startsWith('/usuarios')) {
         return res.status(404).json({ error: 'Rota não encontrada' });
     }
     
-    // Serve o index.html para qualquer rota não API
     const indexPath = path.join(frontendPath, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
