@@ -62,13 +62,21 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
+
+// === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
 const frontendPath = path.resolve(__dirname, '../Frontend');
+console.log('🔍 Frontend path resolved to:', frontendPath);
+console.log('🔍 __dirname is:', __dirname);
+console.log('🔍 process.cwd() is:', process.cwd());
+
 app.use('/Frontend', express.static(frontendPath));
 app.use('/assets', express.static(path.join(frontendPath, 'assets')));
 
 // Rota para servir a página de login na raiz
 app.get('/', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    const indexPath = path.join(frontendPath, 'index.html');
+    console.log('🔍 Trying to serve index.html from:', indexPath);
+    res.sendFile(indexPath);
 });
 
 // === CONFIGURAÇÃO DO BANCO DE DADOS ===
