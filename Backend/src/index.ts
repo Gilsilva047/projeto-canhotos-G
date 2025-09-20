@@ -62,12 +62,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
-
-// === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
-const frontendPath = path.resolve(__dirname, '../Frontend');
-console.log('🔍 Frontend path resolved to:', frontendPath);
-console.log('🔍 __dirname is:', __dirname);
-console.log('🔍 process.cwd() is:', process.cwd());
+const frontendPath = '/opt/render/project/Frontend';
+console.log('🔍 Frontend path hardcoded to:', frontendPath);
 
 app.use('/Frontend', express.static(frontendPath));
 app.use('/assets', express.static(path.join(frontendPath, 'assets')));
