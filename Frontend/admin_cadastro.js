@@ -1,4 +1,4 @@
-// Frontend/admin_cadastro.js (NOVO ARQUIVO)
+// Frontend/admin_cadastro.js (CÓDIGO COMPLETO E CORRIGIDO)
 
 import { API_BASE_URL, authenticatedFetch, initializeAuthAndUserDisplay } from './auth.js';
 
@@ -44,7 +44,7 @@ function verifyAdminAccess() {
 document.addEventListener('DOMContentLoaded', verifyAdminAccess);
 
 backToDashboardButton.addEventListener('click', () => {
-    window.location.href = window.location.origin + '/Frontend/dashboard.html';
+    window.location.href = 'dashboard.html';
 });
 
 cadastroForm.addEventListener('submit', async (event) => {

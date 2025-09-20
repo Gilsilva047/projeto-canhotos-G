@@ -12,7 +12,7 @@ let userId = '';
 
 // Elementos da UI
 const novoCanhotoButton = document.getElementById('novo-canhoto-button');
-const cadastrarUsuarioButton = document.getElementById('cadastrar-usuario-button'); // NOVO BOTÃO
+const cadastrarUsuarioButton = document.getElementById('cadastrar-usuario-button');
 const filterNf = document.getElementById('filter-nf');
 const filterDataEntrega = document.getElementById('filter-data-entrega');
 const filterUsuarioEnvioContainer = document.getElementById('filter-usuario-envio-container');
@@ -97,7 +97,7 @@ async function loadCanhotos() {
             card.innerHTML = `
                 <div class="canhoto-image-container">
                     ${isImage ? `<img src="${fileUrl}" alt="Canhoto NF ${canhoto.nf}" class="canhoto-image">` : 
-                                 `<i class="fas fa-file-pdf text-6xl text-red-500"></i>`}
+                                `<i class="fas fa-file-pdf text-6xl text-red-500"></i>`}
                 </div>
                 <div class="p-4 flex-1 flex flex-col justify-between">
                     <div>
@@ -153,11 +153,11 @@ function updatePaginationButtons() {
 
 // --- Event Listeners ---
 novoCanhotoButton.addEventListener('click', () => {
-    window.location.href = window.location.origin + '/Frontend/upload.html';
+    window.location.href = 'upload.html';
 });
 
 cadastrarUsuarioButton.addEventListener('click', () => {
-    window.location.href = window.location.origin + '/Frontend/admin_cadastro.html';
+    window.location.href = 'admin_cadastro.html';
 });
 
 aplicarFiltrosButton.addEventListener('click', () => {

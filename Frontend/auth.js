@@ -1,11 +1,9 @@
-// Frontend/auth.js (MÓDULO ES6 COMPLETO)
+// Frontend/auth.js (CÓDIGO COMPLETO E CORRIGIDO)
 
-import { API_BASE_URL } from './config.js'; // Importa da configuração
+import { API_BASE_URL } from './config.js';
 
-// Exporta a URL da API
 export { API_BASE_URL };
 
-// Função para exibir mensagens na UI (genérica)
 export function showPageMessage(elementId, msg, className = 'text-red-600') {
     const element = document.getElementById(elementId);
     if (element) {
@@ -15,7 +13,6 @@ export function showPageMessage(elementId, msg, className = 'text-red-600') {
     }
 }
 
-// Função de Logout
 export function handleLogout() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userRole');
@@ -23,10 +20,9 @@ export function handleLogout() {
     localStorage.removeItem('userId');
     localStorage.removeItem('userEmail');
     alert('Você foi desconectado.');
-    window.location.href = window.location.origin + '/';
+    window.location.href = '/';
 }
 
-// Função para fazer requisições autenticadas
 export async function authenticatedFetch(url, options = {}) {
     const token = localStorage.getItem('authToken');
     if (!token) {
@@ -39,6 +35,7 @@ export async function authenticatedFetch(url, options = {}) {
         'Authorization': `Bearer ${token}`
     };
 
+    // FormData lida com o Content-Type automaticamente
     if (options.body instanceof FormData) {
         delete headers['Content-Type'];
     }
@@ -58,10 +55,15 @@ export async function authenticatedFetch(url, options = {}) {
         throw new Error(errorData.error || 'Erro na requisição');
     }
 
-    return response.json();
+    // Retorna a resposta JSON apenas se houver conteúdo
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        return response.json();
+    } else {
+        return {}; // Retorna um objeto vazio se não for JSON
+    }
 }
 
-// Função para inicializar o display do usuário e o botão de logout
 export function initializeAuthAndUserDisplay() {
     const token = localStorage.getItem('authToken');
     const role = localStorage.getItem('userRole');
