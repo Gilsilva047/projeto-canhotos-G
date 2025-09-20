@@ -1,4 +1,4 @@
-// Frontend/login.js (VERSÃO FINAL E CORRETA)
+// Frontend/login.js (VERSÃO FINAL E SEGURA)
 
 import { API_BASE_URL } from './auth.js';
 
@@ -23,13 +23,13 @@ loginForm.addEventListener('submit', async (event) => {
         const data = await response.json();
 
         if (response.ok) {
-            localStorage.setItem('authToken', data.token);
-            localStorage.setItem('userRole', data.role);
-            localStorage.setItem('userName', data.userName);
-            localStorage.setItem('userId', data.userId);
-            localStorage.setItem('userEmail', data.userEmail); 
+            // Salva os dados no sessionStorage em vez do localStorage
+            sessionStorage.setItem('authToken', data.token);
+            sessionStorage.setItem('userRole', data.role);
+            sessionStorage.setItem('userName', data.userName);
+            sessionStorage.setItem('userId', data.userId);
+            sessionStorage.setItem('userEmail', data.userEmail); 
 
-            // AQUI ESTÁ A CORREÇÃO PRINCIPAL
             window.location.href = 'dashboard.html';
         } else {
             errorMessage.textContent = data.error || data.msg || 'Ocorreu um erro desconhecido.';

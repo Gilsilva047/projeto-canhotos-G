@@ -1,4 +1,4 @@
-// Frontend/auth.js (CÓDIGO COMPLETO E CORRIGIDO)
+// Frontend/auth.js (CÓDIGO COMPLETO E SEGURO)
 
 import { API_BASE_URL } from './config.js';
 
@@ -14,17 +14,19 @@ export function showPageMessage(elementId, msg, className = 'text-red-600') {
 }
 
 export function handleLogout() {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userEmail');
+    // Limpa o sessionStorage em vez do localStorage
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('userName');
+    sessionStorage.removeItem('userId');
+    sessionStorage.removeItem('userEmail');
     alert('Você foi desconectado.');
     window.location.href = '/';
 }
 
 export async function authenticatedFetch(url, options = {}) {
-    const token = localStorage.getItem('authToken');
+    // Pega o token do sessionStorage
+    const token = sessionStorage.getItem('authToken');
     if (!token) {
         handleLogout();
         throw new Error('Não autenticado');
@@ -65,10 +67,11 @@ export async function authenticatedFetch(url, options = {}) {
 }
 
 export function initializeAuthAndUserDisplay() {
-    const token = localStorage.getItem('authToken');
-    const role = localStorage.getItem('userRole');
-    const name = localStorage.getItem('userName');
-    const id = localStorage.getItem('userId');
+    // Lê os dados do sessionStorage
+    const token = sessionStorage.getItem('authToken');
+    const role = sessionStorage.getItem('userRole');
+    const name = sessionStorage.getItem('userName');
+    const id = sessionStorage.getItem('userId');
 
     if (!token || !role) {
         handleLogout();
