@@ -62,7 +62,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
-const findFrontendPath = () => {
+const findFrontendPath = (): string | null => {
     const possiblePaths = [
         path.resolve(__dirname, '../Frontend'),
         path.resolve(__dirname, '../../Frontend'),
@@ -98,7 +98,6 @@ if (frontendPath) {
         res.status(500).send('Frontend não encontrado');
     });
 }
-
 // === CONFIGURAÇÃO DO BANCO DE DADOS ===
 const db = new sqlite3.Database("meu_banco.db", (err) => {
     if (err) {
