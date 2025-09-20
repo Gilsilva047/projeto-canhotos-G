@@ -62,7 +62,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
-const frontendPath = path.join(process.cwd(), 'Frontend');
+const frontendPath = path.resolve(__dirname, '../Frontend');
 app.use('/Frontend', express.static(frontendPath));
 app.use('/assets', express.static(path.join(frontendPath, 'assets')));
 
