@@ -291,7 +291,7 @@ app.post("/login", (req: Request, res: Response) => {
         if (!senhaCorreta) { return res.status(401).json({ error: "Credenciais inválidas." }); }
 
         const secret = process.env.JWT_SECRET;
-        if (!secret) { return res.status(500).json({ error: "Chave secreta do JWT não configurada." }); }
+        if (!secret) { return res.status(500).json({ error: "Chave invalida" }); }
 
         const token = jwt.sign({ id: row.id, role: row.role, email: row.email }, secret, { expiresIn: '8h' });
 
