@@ -1,4 +1,4 @@
-// src/index.ts (VERSÃO FINAL E LIMPA - SEM DADOS DE TESTE)
+// src/index.ts
 
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -53,16 +53,11 @@ app.use(cors());
 // === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
 const frontendPath = path.resolve(__dirname, '../../Frontend');
 app.use(express.static(frontendPath));
-app.get('/', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-});
 
 // === CONFIGURAÇÃO DO BANCO DE DADOS ===
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
 // === MIDDLEWARE DE AUTENTICAÇÃO ===
@@ -95,16 +90,13 @@ const verificarMasterAdmin = (req: Request, res: Response, next: NextFunction) =
     if (!req.usuario) {
         return res.status(401).json({ error: "Acesso negado. Usuário não autenticado." });
     }
-    if (req.usuario.role !== 'admin') {
-        return res.status(403).json({ error: "Acesso negado. Somente administradores podem realizar esta ação." });
-    }
-    if (req.usuario.email !== MASTER_ADMIN_EMAIL) {
-        return res.status(403).json({ error: "Acesso negado. Este usuário administrador não é o administrador principal para criar novos usuários." });
+    if (req.usuario.role !== 'admin' || req.usuario.email !== MASTER_ADMIN_EMAIL) {
+        return res.status(403).json({ error: "Acesso negado. Ação permitida apenas para o administrador principal." });
     }
     next();
 };
 
-// === INICIALIZAÇÃO DO BANCO DE DADOS (ALTERADO) ===
+// === INICIALIZAÇÃO DO BANCO DE DADOS ===
 const inicializarBanco = async () => {
     const queryUsuarios = `
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -133,18 +125,14 @@ const inicializarBanco = async () => {
         await client.query(queryUploads);
         console.log("Tabela 'uploads' garantida.");
 
-        // Lógica para criar o Master Admin inicial se não existir
-        const res = await client.query("SELECT COUNT(*) as count FROM usuarios");
+        const res = await client.query("SELECT COUNT(*) as count FROM usuarios WHERE email = $1", [MASTER_ADMIN_EMAIL]);
         if (res.rows[0].count === '0') {
-            console.log("Nenhum usuário encontrado, criando o Master Admin inicial...");
-            
+            console.log("Master Admin não encontrado, criando...");
             const initialAdminPassword = process.env.MASTER_ADMIN_INITIAL_PASSWORD || 'admin123';
-            
             if (!MASTER_ADMIN_EMAIL || !initialAdminPassword) {
                 console.error("ERRO: Variáveis de ambiente MASTER_ADMIN_EMAIL e MASTER_ADMIN_INITIAL_PASSWORD devem ser definidas.");
                 return;
             }
-
             const hashedPassword = await bcrypt.hash(initialAdminPassword, 10);
             await client.query(
                 "INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)",
@@ -195,10 +183,18 @@ app.post("/login", async (req: Request, res: Response) => {
         const secret = process.env.JWT_SECRET;
         if (!secret) return res.status(500).json({ error: "Chave JWT não configurada." });
 
+        // **AJUSTE DE SEGURANÇA**
+        const isMasterAdmin = row.email === MASTER_ADMIN_EMAIL && row.role === 'admin';
+
         const token = jwt.sign({ id: row.id, role: row.role, email: row.email }, secret, { expiresIn: '8h' });
         res.status(200).json({
-            msg: "Login realizado com sucesso!", token, role: row.role,
-            userName: row.nome, userId: row.id, userEmail: row.email
+            msg: "Login realizado com sucesso!",
+            token,
+            role: row.role,
+            userName: row.nome,
+            userId: row.id,
+            userEmail: row.email,
+            isMasterAdmin // Envia a flag de permissão para o frontend
         });
     } catch (err: any) {
         return res.status(500).json({ error: "Ocorreu um erro ao tentar fazer o login." });
@@ -231,23 +227,28 @@ app.post("/upload", verificarToken, upload.single("arquivo"), [
 app.get('/uploads', verificarToken, async (req: Request, res: Response) => {
     const { nf, data_entrega, usuario_id, page = '1', limit = '30' } = req.query;
     let paramIndex = 1;
-    let baseSql = `SELECT u.id, u.nf, u.data_entrega, u.nome_arquivo, u.data_envio, us.nome as usuario_nome, us.id as usuario_id_upload FROM uploads u JOIN usuarios us ON u.usuario_id = us.id WHERE 1=1`;
+    let baseSql = `SELECT u.id, u.nf, u.data_entrega, u.nome_arquivo, u.data_envio, us.nome as usuario_nome, us.id as usuario_id_upload FROM uploads u JOIN usuarios us ON u.usuario_id = us.id`;
+    let whereClauses = [];
     const params: (string | number | null)[] = [];
 
     if (req.usuario!.role === 'transportador') {
-        baseSql += ` AND u.usuario_id = $${paramIndex++}`;
+        whereClauses.push(`u.usuario_id = $${paramIndex++}`);
         params.push(req.usuario!.id);
     } else if ((req.usuario!.role === 'colaborador' || req.usuario!.role === 'admin') && usuario_id) {
-        baseSql += ` AND u.usuario_id = $${paramIndex++}`;
+        whereClauses.push(`u.usuario_id = $${paramIndex++}`);
         params.push(Number(usuario_id));
     }
     if (nf) {
-        baseSql += ` AND u.nf ILIKE $${paramIndex++}`;
+        whereClauses.push(`u.nf ILIKE $${paramIndex++}`);
         params.push(`%${nf}%`);
     }
     if (data_entrega) {
-        baseSql += ` AND u.data_entrega = $${paramIndex++}`;
+        whereClauses.push(`u.data_entrega = $${paramIndex++}`);
         params.push(String(data_entrega));
+    }
+
+    if (whereClauses.length > 0) {
+        baseSql += ` WHERE ${whereClauses.join(' AND ')}`;
     }
     
     try {
@@ -255,9 +256,12 @@ app.get('/uploads', verificarToken, async (req: Request, res: Response) => {
         const totalItems = parseInt(countResult.rows[0].count);
         const pageNum = parseInt(page as string), limitNum = parseInt(limit as string);
         const offset = (pageNum - 1) * limitNum;
+
+        const dataParams = [...params];
         const dataSql = `${baseSql} ORDER BY u.data_envio DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-        params.push(limitNum, offset);
-        const dataResult = await pool.query(dataSql, params);
+        dataParams.push(limitNum, offset);
+
+        const dataResult = await pool.query(dataSql, dataParams);
         res.json({ uploads: dataResult.rows, totalItems });
     } catch (err: any) {
         return res.status(500).json({ error: 'Erro ao buscar canhotos.' });
@@ -269,7 +273,7 @@ app.get("/usuarios", verificarToken, async (req: Request, res: Response) => {
         return res.status(403).json({ error: "Acesso negado." });
     }
     try {
-        const result = await pool.query("SELECT id, nome, email, role FROM usuarios");
+        const result = await pool.query("SELECT id, nome, email, role FROM usuarios ORDER BY nome ASC");
         res.json(result.rows);
     } catch (err: any) {
         return res.status(500).json({ error: "Ocorreu um erro ao buscar os dados." });
@@ -277,14 +281,19 @@ app.get("/usuarios", verificarToken, async (req: Request, res: Response) => {
 });
 
 // === ARQUIVOS ESTÁTICOS E FALLBACK ===
-app.use('/uploads', express.static(uploadDir));
-app.get('*', (req, res) => res.sendFile(path.join(frontendPath, 'index.html')));
+app.use('/uploads', verificarToken, express.static(uploadDir));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 // === MIDDLEWARE DE ERROS ===
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error('ERRO NÃO TRATADO:', err.message);
+    console.error('ERRO NÃO TRATADO:', err);
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'Arquivo muito grande. Máximo 5MB.' });
+    }
+    if (err.message.includes('Tipo de arquivo não permitido')) {
+        return res.status(400).json({ error: err.message });
     }
     return res.status(500).json({ error: 'Ocorreu um erro inesperado no servidor.' });
 });
