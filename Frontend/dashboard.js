@@ -3,11 +3,7 @@ import { API_BASE_URL, authenticatedFetch, initializeAuthAndUserDisplay } from '
 const ITEMS_PER_PAGE = 30;
 let currentPage = 1;
 let totalPages = 1;
-let currentUser = {
-    role: '',
-    id: '',
-    isMasterAdmin: false
-};
+let currentUser = { role: '', id: '', isMasterAdmin: false };
 
 // --- Elementos da UI ---
 const sidebar = document.getElementById('sidebar');
@@ -29,21 +25,34 @@ const prevPageButton = document.getElementById('prev-page-button');
 const nextPageButton = document.getElementById('next-page-button');
 const pageInfo = document.getElementById('page-info');
 
+// --- Elementos do Lightbox (Zoom) ---
+const lightbox = document.getElementById('imageLightbox');
+const lightboxImage = document.getElementById('lightboxImage');
+const lightboxClose = document.getElementById('lightboxClose');
+
+// --- Lógica do Lightbox ---
+function openLightbox(imageUrl) {
+    lightboxImage.src = imageUrl;
+    lightbox.style.display = 'flex';
+}
+
+function closeLightbox() {
+    lightbox.style.display = 'none';
+}
+
+lightboxClose.addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) {
+        closeLightbox();
+    }
+});
+
 // --- Funções Auxiliares ---
 function formatDate(isoString) {
     if (!isoString) return 'Não informada';
     const date = new Date(isoString);
     const userTimezoneOffset = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
-}
-
-function downloadFile(filePath, fileName) {
-    const link = document.createElement('a');
-    link.href = filePath;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 }
 
 // --- Funções de Carregamento e Renderização ---
@@ -58,7 +67,6 @@ async function loadCanhotos() {
         const nf = filterNf.value.trim();
         const dataEntrega = filterDataEntrega.value;
         const usuarioId = (currentUser.role === 'colaborador' || currentUser.role === 'admin') ? filterUsuarioEnvio.value : '';
-
         let apiUrl = `${API_BASE_URL}/uploads?page=${currentPage}&limit=${ITEMS_PER_PAGE}`;
         if (nf) apiUrl += `&nf=${encodeURIComponent(nf)}`;
         if (dataEntrega) apiUrl += `&data_entrega=${dataEntrega}`;
@@ -66,7 +74,6 @@ async function loadCanhotos() {
         
         const data = await authenticatedFetch(apiUrl);
         const { uploads = [], totalItems = 0 } = data;
-
         totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
         updatePaginationButtons();
 
@@ -86,31 +93,31 @@ async function loadCanhotos() {
 }
 
 function renderCanhotos(uploads) {
+    canhotosGrid.innerHTML = '';
     uploads.forEach(canhoto => {
         const card = document.createElement('div');
-        card.className = 'card';
+        card.className = 'image-card';
         
-        // --- MUDANÇA PRINCIPAL AQUI ---
-        // Agora usamos a 'image_url' diretamente, que vem do banco de dados.
         const fileUrl = canhoto.image_url; 
-        const isImage = fileUrl.match(/\.(jpeg|jpg|png|gif)$/i);
+        const isImage = fileUrl && fileUrl.match(/\.(jpeg|jpg|png|gif)$/i);
 
+        let content = '';
+        if (isImage) {
+            content = `<img src="${fileUrl}" alt="Canhoto NF ${canhoto.nf}">`;
+            card.addEventListener('click', () => openLightbox(fileUrl));
+        } else {
+            content = `<div class="pdf-icon"><i class="fas fa-file-pdf"></i></div>`;
+            card.addEventListener('click', () => window.open(fileUrl, '_blank'));
+        }
+        
         card.innerHTML = `
-            <div class="card-image-container">
-                ${isImage ? `<img src="${fileUrl}" alt="Canhoto NF ${canhoto.nf}" class="canhoto-image">` : 
-                           `<i class="fas fa-file-pdf text-6xl text-red-500"></i>`}
-            </div>
-            <h3>NF: ${canhoto.nf}</h3>
-            <p><strong>Data de Entrega:</strong> ${formatDate(canhoto.data_entrega)}</p>
-            ${(currentUser.role === 'colaborador' || currentUser.role === 'admin') ? `<p><strong>Enviado por:</strong> ${canhoto.usuario_nome}</p>` : ''}
-            <div class="card-footer">
-                <button class="action-btn primary download-btn">
-                    <i class="fas fa-download"></i> Baixar
-                </button>
+            ${content}
+            <div class="overlay">
+                <h3>NF: ${canhoto.nf}</h3>
+                <p>Por: ${canhoto.usuario_nome}</p>
+                <p>Data: ${formatDate(canhoto.data_entrega)}</p>
             </div>
         `;
-        // O botão de download agora usa a URL direta da imagem
-        card.querySelector('.download-btn').addEventListener('click', () => downloadFile(fileUrl, `canhoto-NF-${canhoto.nf}`));
         canhotosGrid.appendChild(card);
     });
 }
