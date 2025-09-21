@@ -1,7 +1,4 @@
-// Frontend/dashboard.js
-
-import { authenticatedFetch, initializeAuthAndUserDisplay } from './auth.js';
-import { API_BASE_URL } from './config.js';
+import { API_BASE_URL, authenticatedFetch, initializeAuthAndUserDisplay } from './auth.js';
 
 const ITEMS_PER_PAGE = 30;
 let currentPage = 1;
@@ -92,9 +89,11 @@ function renderCanhotos(uploads) {
     uploads.forEach(canhoto => {
         const card = document.createElement('div');
         card.className = 'card';
-        const token = sessionStorage.getItem('authToken');
-        const fileUrl = `${API_BASE_URL}/uploads/${canhoto.nome_arquivo}?token=${token}`;
-        const isImage = canhoto.nome_arquivo.match(/\.(jpeg|jpg|png|gif)$/i);
+        
+        // --- MUDANÇA PRINCIPAL AQUI ---
+        // Agora usamos a 'image_url' diretamente, que vem do banco de dados.
+        const fileUrl = canhoto.image_url; 
+        const isImage = fileUrl.match(/\.(jpeg|jpg|png|gif)$/i);
 
         card.innerHTML = `
             <div class="card-image-container">
@@ -110,7 +109,8 @@ function renderCanhotos(uploads) {
                 </button>
             </div>
         `;
-        card.querySelector('.download-btn').addEventListener('click', () => downloadFile(fileUrl, canhoto.nome_arquivo));
+        // O botão de download agora usa a URL direta da imagem
+        card.querySelector('.download-btn').addEventListener('click', () => downloadFile(fileUrl, `canhoto-NF-${canhoto.nf}`));
         canhotosGrid.appendChild(card);
     });
 }
