@@ -1,6 +1,6 @@
-// Frontend/login.js (VERSÃO FINAL E SEGURA)
+// Frontend/login.js
 
-import { API_BASE_URL } from './auth.js';
+import { API_BASE_URL } from './config.js';
 
 const loginForm = document.getElementById('login-form');
 const errorMessage = document.getElementById('error-message');
@@ -23,12 +23,14 @@ loginForm.addEventListener('submit', async (event) => {
         const data = await response.json();
 
         if (response.ok) {
-            // Salva os dados no sessionStorage em vez do localStorage
+            // Salva os dados no sessionStorage
             sessionStorage.setItem('authToken', data.token);
             sessionStorage.setItem('userRole', data.role);
             sessionStorage.setItem('userName', data.userName);
             sessionStorage.setItem('userId', data.userId);
-            sessionStorage.setItem('userEmail', data.userEmail); 
+            sessionStorage.setItem('userEmail', data.userEmail);
+            // Salva a flag de permissão
+            sessionStorage.setItem('isMasterAdmin', data.isMasterAdmin);
 
             window.location.href = 'dashboard.html';
         } else {
