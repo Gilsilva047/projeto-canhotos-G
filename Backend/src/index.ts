@@ -2,9 +2,8 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import express, { Request, Response, NextFunction } from 'express';
-import multer = require('multer');
+import multer = require('multer'); // Mantido para referência, mas não usado na rota de upload
 import { Pool } from 'pg';
-import fs = require('fs');
 import path = require('path');
 import cors = require('cors');
 import bcrypt = require('bcrypt');
@@ -76,8 +75,6 @@ const inicializarBanco = async () => {
         role TEXT DEFAULT 'colaborador',
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )`;
-
-    // Garante que a tabela uploads tenha a coluna image_url e não tenha a nome_arquivo
     const queryUploads = `
     CREATE TABLE IF NOT EXISTS uploads (
         id SERIAL PRIMARY KEY,
@@ -87,14 +84,12 @@ const inicializarBanco = async () => {
         image_url TEXT,
         data_envio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )`;
-
     const client = await pool.connect();
     try {
         await client.query(queryUsuarios);
         console.log("Tabela 'usuarios' garantida.");
         await client.query(queryUploads);
         console.log("Tabela 'uploads' garantida.");
-
         const res = await client.query("SELECT COUNT(*) as count FROM usuarios WHERE email = $1", [MASTER_ADMIN_EMAIL]);
         if (res.rows[0].count === '0') {
             console.log("Master Admin não encontrado, criando...");
@@ -131,8 +126,8 @@ app.post("/cadastrar", verificarToken, verificarMasterAdmin, [
     const { nome, email, senha, role } = req.body;
     try {
         const senhaHash = await bcrypt.hash(senha, 10);
-        const result = await pool.query("INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4) RETURNING id", [nome, email, senhaHash, role]);
-        res.status(201).json({ msg: "Usuário cadastrado com sucesso!", id: result.rows[0].id, role: role });
+        await pool.query("INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)", [nome, email, senhaHash, role]);
+        res.status(201).json({ msg: "Usuário cadastrado com sucesso!" });
     } catch (err: any) {
         if (err.code === '23505') return res.status(400).json({ error: "Email já está cadastrado" });
         return res.status(500).json({ error: "Ocorreu um erro ao cadastrar o usuário." });
@@ -154,34 +149,26 @@ app.post("/login", async (req: Request, res: Response) => {
         if (!secret) return res.status(500).json({ error: "Chave JWT não configurada." });
 
         const isMasterAdmin = row.email === MASTER_ADMIN_EMAIL && row.role === 'admin';
-
         const token = jwt.sign({ id: row.id, role: row.role, email: row.email }, secret, { expiresIn: '8h' });
         res.status(200).json({
-            msg: "Login realizado com sucesso!",
-            token,
-            role: row.role,
-            userName: row.nome,
-            userId: row.id,
-            userEmail: row.email,
-            isMasterAdmin
+            msg: "Login realizado com sucesso!", token, role: row.role,
+            userName: row.nome, userId: row.id, userEmail: row.email, isMasterAdmin
         });
     } catch (err: any) {
         return res.status(500).json({ error: "Ocorreu um erro ao tentar fazer o login." });
     }
 });
 
+// ROTA DE UPLOAD COM VALIDAÇÃO DE DATA REMOVIDA
 app.post("/upload", verificarToken, [
     body('nf').trim().notEmpty().withMessage('O número da NF é obrigatório.'),
-    body('imageUrl').isURL().withMessage('A URL da imagem é inválida.'),
-    body('data_entrega').optional({ nullable: true, checkFalsy: true }).isISO8601().toDate().withMessage('A data de entrega deve estar no formato AAAA-MM-DD.')
+    body('imageUrl').isURL().withMessage('A URL da imagem é inválida.')
 ], async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-
     const { nf, data_entrega, imageUrl } = req.body;
-    
     try {
         await pool.query(
             "INSERT INTO uploads (usuario_id, nf, data_entrega, image_url) VALUES ($1, $2, $3, $4)",
@@ -250,7 +237,6 @@ app.get("/usuarios", verificarToken, async (req: Request, res: Response) => {
     }
 });
 
-
 app.get('*', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
@@ -258,12 +244,6 @@ app.get('*', (req, res) => {
 // === MIDDLEWARE DE ERROS ===
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error('ERRO NÃO TRATADO:', err);
-    if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'Arquivo muito grande. Máximo 5MB.' });
-    }
-    if (err.message.includes('Tipo de arquivo não permitido')) {
-        return res.status(400).json({ error: err.message });
-    }
     return res.status(500).json({ error: 'Ocorreu um erro inesperado no servidor.' });
 });
 
