@@ -1,5 +1,3 @@
-// src/index.ts
-
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -15,35 +13,6 @@ import { body, validationResult } from 'express-validator';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-
-// === CONFIGURAÇÃO DO MULTER ===
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-const storage = multer.diskStorage({
-    destination: (req: Request, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req: Request, file, cb) => {
-        const uniqueName = Date.now() + "-" + file.originalname;
-        cb(null, uniqueName);
-    }
-});
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
-        cb(null, true);
-    } else {
-        cb(new Error('Tipo de arquivo não permitido! Apenas imagens e PDFs são aceitos.'));
-    }
-};
-const upload = multer({
-    storage,
-    fileFilter,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
-    }
-});
 
 // === MIDDLEWARES ===
 app.use(express.json());
@@ -108,13 +77,14 @@ const inicializarBanco = async () => {
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )`;
 
+    // Garante que a tabela uploads tenha a coluna image_url e não tenha a nome_arquivo
     const queryUploads = `
     CREATE TABLE IF NOT EXISTS uploads (
         id SERIAL PRIMARY KEY,
         usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
         nf TEXT NOT NULL,
         data_entrega DATE,
-        nome_arquivo TEXT NOT NULL,
+        image_url TEXT,
         data_envio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )`;
 
@@ -183,7 +153,6 @@ app.post("/login", async (req: Request, res: Response) => {
         const secret = process.env.JWT_SECRET;
         if (!secret) return res.status(500).json({ error: "Chave JWT não configurada." });
 
-        // **AJUSTE DE SEGURANÇA**
         const isMasterAdmin = row.email === MASTER_ADMIN_EMAIL && row.role === 'admin';
 
         const token = jwt.sign({ id: row.id, role: row.role, email: row.email }, secret, { expiresIn: '8h' });
@@ -194,40 +163,41 @@ app.post("/login", async (req: Request, res: Response) => {
             userName: row.nome,
             userId: row.id,
             userEmail: row.email,
-            isMasterAdmin // Envia a flag de permissão para o frontend
+            isMasterAdmin
         });
     } catch (err: any) {
         return res.status(500).json({ error: "Ocorreu um erro ao tentar fazer o login." });
     }
 });
 
-app.post("/upload", verificarToken, upload.single("arquivo"), [
+app.post("/upload", verificarToken, [
     body('nf').trim().notEmpty().withMessage('O número da NF é obrigatório.'),
+    body('imageUrl').isURL().withMessage('A URL da imagem é inválida.'),
     body('data_entrega').optional({ nullable: true, checkFalsy: true }).isISO8601().toDate().withMessage('A data de entrega deve estar no formato AAAA-MM-DD.')
 ], async (req: Request, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        if (req.file) fs.unlinkSync(req.file.path);
         return res.status(400).json({ errors: errors.array() });
     }
-    const { nf, data_entrega } = req.body;
-    if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado." });
 
+    const { nf, data_entrega, imageUrl } = req.body;
+    
     try {
-        const result = await pool.query(
-            "INSERT INTO uploads (nome_arquivo, usuario_id, nf, data_entrega) VALUES ($1, $2, $3, $4) RETURNING id",
-            [req.file.filename, req.usuario!.id, nf, data_entrega ? data_entrega : null]
+        await pool.query(
+            "INSERT INTO uploads (usuario_id, nf, data_entrega, image_url) VALUES ($1, $2, $3, $4)",
+            [req.usuario!.id, nf, data_entrega ? data_entrega : null, imageUrl]
         );
-        res.status(201).json({ msg: "Upload realizado com sucesso!", arquivo: req.file.filename, id: result.rows[0].id });
+        res.status(201).json({ msg: "Upload realizado com sucesso!" });
     } catch (err: any) {
-        return res.status(500).json({ error: "Ocorreu um erro ao salvar as informações do arquivo." });
+        console.error("Erro ao salvar no banco:", err);
+        return res.status(500).json({ error: "Ocorreu um erro ao salvar as informações." });
     }
 });
 
 app.get('/uploads', verificarToken, async (req: Request, res: Response) => {
     const { nf, data_entrega, usuario_id, page = '1', limit = '30' } = req.query;
     let paramIndex = 1;
-    let baseSql = `SELECT u.id, u.nf, u.data_entrega, u.nome_arquivo, u.data_envio, us.nome as usuario_nome, us.id as usuario_id_upload FROM uploads u JOIN usuarios us ON u.usuario_id = us.id`;
+    let baseSql = `SELECT u.id, u.nf, u.data_entrega, u.image_url, u.data_envio, us.nome as usuario_nome FROM uploads u JOIN usuarios us ON u.usuario_id = us.id`;
     let whereClauses = [];
     const params: (string | number | null)[] = [];
 
@@ -280,8 +250,7 @@ app.get("/usuarios", verificarToken, async (req: Request, res: Response) => {
     }
 });
 
-// === ARQUIVOS ESTÁTICOS E FALLBACK ===
-app.use('/uploads', verificarToken, express.static(uploadDir));
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
