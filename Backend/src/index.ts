@@ -2,7 +2,6 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import express, { Request, Response, NextFunction } from 'express';
-import multer = require('multer'); // Mantido para referência, mas não usado na rota de upload
 import { Pool } from 'pg';
 import path = require('path');
 import cors = require('cors');
@@ -159,7 +158,6 @@ app.post("/login", async (req: Request, res: Response) => {
     }
 });
 
-// ROTA DE UPLOAD COM VALIDAÇÃO DE DATA REMOVIDA
 app.post("/upload", verificarToken, [
     body('nf').trim().notEmpty().withMessage('O número da NF é obrigatório.'),
     body('imageUrl').isURL().withMessage('A URL da imagem é inválida.')
@@ -168,11 +166,19 @@ app.post("/upload", verificarToken, [
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-    const { nf, data_entrega, imageUrl } = req.body;
+
+    // CORREÇÃO APLICADA AQUI
+    let { nf, data_entrega, imageUrl } = req.body;
+    
+    // Garante que se 'data_entrega' for uma string vazia ou não existir, ela se torne null.
+    if (!data_entrega) {
+        data_entrega = null;
+    }
+    
     try {
         await pool.query(
             "INSERT INTO uploads (usuario_id, nf, data_entrega, image_url) VALUES ($1, $2, $3, $4)",
-            [req.usuario!.id, nf, data_entrega ? data_entrega : null, imageUrl]
+            [req.usuario!.id, nf, data_entrega, imageUrl]
         );
         res.status(201).json({ msg: "Upload realizado com sucesso!" });
     } catch (err: any) {
