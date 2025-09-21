@@ -80,15 +80,11 @@ const inicializarBanco = async () => {
     const client = await pool.connect();
     try {
         await client.query(queryUsuarios);
-        console.log("Tabela 'usuarios' garantida.");
         await client.query(queryUploads);
-        console.log("Tabela 'uploads' garantida.");
         const res = await client.query("SELECT COUNT(*) as count FROM usuarios WHERE email = $1", [MASTER_ADMIN_EMAIL]);
         if (res.rows[0].count === '0') {
-            console.log("Master Admin não encontrado, criando...");
             const initialAdminPassword = process.env.MASTER_ADMIN_INITIAL_PASSWORD || 'admin123';
             if (!MASTER_ADMIN_EMAIL || !initialAdminPassword) {
-                console.error("ERRO: Variáveis de ambiente MASTER_ADMIN_EMAIL e MASTER_ADMIN_INITIAL_PASSWORD devem ser definidas.");
                 return;
             }
             const hashedPassword = await bcrypt.hash(initialAdminPassword, 10);
@@ -96,7 +92,6 @@ const inicializarBanco = async () => {
                 "INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)",
                 ['Master Admin', MASTER_ADMIN_EMAIL, hashedPassword, 'admin']
             );
-            console.log('Usuário Master Admin criado com sucesso!');
         }
     } catch (err) {
         console.error('Erro durante a inicialização do banco de dados:', err);
@@ -106,20 +101,18 @@ const inicializarBanco = async () => {
 };
 
 app.post("/cadastrar", verificarToken, verificarMasterAdmin, [
-    body('nome').trim().notEmpty().withMessage('O nome é obrigatório.'),
-    body('email').isEmail().withMessage('Por favor, insira um email válido.').normalizeEmail(),
-    body('senha').isLength({ min: 8 }).withMessage('A senha deve ter no mínimo 8 caracteres.'),
-    body('role').isIn(['transportador', 'colaborador', 'admin']).withMessage('O tipo de usuário é inválido.')
+    body('nome').trim().notEmpty(),
+    body('email').isEmail().normalizeEmail(),
+    body('senha').isLength({ min: 8 }),
+    body('role').isIn(['transportador', 'colaborador', 'admin'])
 ], async (req: Request, res: Response) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
+    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
     const { nome, email, senha, role } = req.body;
     try {
         const senhaHash = await bcrypt.hash(senha, 10);
-        const result = await pool.query("INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4) RETURNING id", [nome, email, senhaHash, role]);
-        res.status(201).json({ msg: "Usuário cadastrado com sucesso!", id: result.rows[0].id, role: role });
+        await pool.query("INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)", [nome, email, senhaHash, role]);
+        res.status(201).json({ msg: "Usuário cadastrado com sucesso!" });
     } catch (err: any) {
         if (err.code === '23505') return res.status(400).json({ error: "Email já está cadastrado" });
         return res.status(500).json({ error: "Ocorreu um erro ao cadastrar o usuário." });
@@ -155,20 +148,20 @@ app.post("/upload", verificarToken, [
     body('nf').trim().notEmpty(),
     body('imageUrl').isURL()
 ], async (req: Request, res: Response) => {
-    // LINHA DE DIAGNÓSTICO
-    console.log("--- EXECUTANDO NOVA VERSÃO DA ROTA UPLOAD (v2) ---");
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
 
     const { nf, imageUrl } = req.body;
-    // LÓGICA REFORÇADA PARA TRATAR A DATA
-    const dataEntrega = req.body.data_entrega ? req.body.data_entrega : null;
+    
+    // CORREÇÃO DEFINITIVA PARA O PROBLEMA DA DATA
+    let dataEntrega = req.body.data_entrega;
+    if (!dataEntrega || typeof dataEntrega !== 'string' || dataEntrega.trim() === '') {
+        dataEntrega = null;
+    }
 
     try {
-        console.log(`Recebido para salvar: NF=${nf}, Data=${dataEntrega}, URL=${imageUrl}`);
         await pool.query(
             "INSERT INTO uploads (usuario_id, nf, data_entrega, image_url) VALUES ($1, $2, $3, $4)",
             [req.usuario!.id, nf, dataEntrega, imageUrl]
