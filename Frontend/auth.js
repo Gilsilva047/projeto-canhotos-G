@@ -1,4 +1,4 @@
-// Frontend/auth.js (CÓDIGO COMPLETO E SEGURO)
+// Frontend/auth.js
 
 import { API_BASE_URL } from './config.js';
 
@@ -14,18 +14,12 @@ export function showPageMessage(elementId, msg, className = 'text-red-600') {
 }
 
 export function handleLogout() {
-    // Limpa o sessionStorage em vez do localStorage
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('userRole');
-    sessionStorage.removeItem('userName');
-    sessionStorage.removeItem('userId');
-    sessionStorage.removeItem('userEmail');
+    sessionStorage.clear();
     alert('Você foi desconectado.');
     window.location.href = '/';
 }
 
 export async function authenticatedFetch(url, options = {}) {
-    // Pega o token do sessionStorage
     const token = sessionStorage.getItem('authToken');
     if (!token) {
         handleLogout();
@@ -37,9 +31,11 @@ export async function authenticatedFetch(url, options = {}) {
         'Authorization': `Bearer ${token}`
     };
 
-    // FormData lida com o Content-Type automaticamente
     if (options.body instanceof FormData) {
         delete headers['Content-Type'];
+    } else if (options.body && typeof options.body === 'object') {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(options.body);
     }
 
     const response = await fetch(url, { ...options, headers });
@@ -49,25 +45,19 @@ export async function authenticatedFetch(url, options = {}) {
         throw new Error('Acesso não autorizado ou token inválido');
     }
 
+    const responseData = await response.json().catch(() => ({}));
+    
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (errorData.errors && errorData.errors.length > 0) {
-            throw new Error(errorData.errors[0].msg);
+        if (responseData.errors && responseData.errors.length > 0) {
+            throw new Error(responseData.errors[0].msg);
         }
-        throw new Error(errorData.error || 'Erro na requisição');
+        throw new Error(responseData.error || 'Erro na requisição');
     }
 
-    // Retorna a resposta JSON apenas se houver conteúdo
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.indexOf("application/json") !== -1) {
-        return response.json();
-    } else {
-        return {}; // Retorna um objeto vazio se não for JSON
-    }
+    return responseData;
 }
 
 export function initializeAuthAndUserDisplay() {
-    // Lê os dados do sessionStorage
     const token = sessionStorage.getItem('authToken');
     const role = sessionStorage.getItem('userRole');
     const name = sessionStorage.getItem('userName');
@@ -80,11 +70,24 @@ export function initializeAuthAndUserDisplay() {
 
     const userDisplayName = document.getElementById('user-display-name');
     const logoutButton = document.getElementById('logout-button');
+    const userIcon = document.getElementById('user-icon'); // Pega o elemento do ícone
 
     if (userDisplayName && name) {
         userDisplayName.textContent = `Olá, ${name}`;
-    } else if (userDisplayName && role) {
-        userDisplayName.textContent = `Olá, ${role}`;
+    }
+
+    // LÓGICA PARA AS INICIAIS
+    if (userIcon && name) {
+        const nameParts = name.trim().split(' ');
+        let initials = '';
+        if (nameParts.length > 1) {
+            initials = nameParts[0][0] + nameParts[nameParts.length - 1][0];
+        } else if (nameParts[0] && nameParts[0].length > 1) {
+            initials = nameParts[0].substring(0, 2);
+        } else if (nameParts[0]) {
+            initials = nameParts[0][0];
+        }
+        userIcon.textContent = initials.toUpperCase();
     }
 
     if (logoutButton) {

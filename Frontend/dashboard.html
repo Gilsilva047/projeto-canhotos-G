@@ -23,17 +23,11 @@
         .sidebar { width: var(--sidebar-width); background: linear-gradient(to bottom, #000000, #c00000); color: white; position: fixed; height: 100%; transition: transform 0.3s ease; transform: translateX(calc(-1 * var(--sidebar-width))); z-index: 1001; display: flex; flex-direction: column; }
         .sidebar.open { transform: translateX(0); }
         .sidebar-header { padding: 20px; font-size: 1.5rem; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        
-        .sidebar ul { list-style: none; padding: 0; margin: 0; flex-grow: 1; /* Faz a lista crescer */ }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
         .sidebar ul li { padding: 15px 20px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: background-color 0.2s; }
         .sidebar ul li:hover { background-color: #34495e; }
         .sidebar ul li.active { background-color: var(--primary-color); }
-
-        /* Estilo para o botão de sair no final da sidebar */
-        #logout-button-sidebar { 
-            margin-top: auto; /* Empurra para o final */
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
+        #logout-button { margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.2); }
 
         .main-content { margin-left: 0; width: 100%; padding: calc(var(--header-height) + 20px) 20px 20px; transition: margin-left 0.3s ease, width 0.3s ease; }
         .main-content.shifted { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
@@ -41,9 +35,18 @@
         .header { position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: linear-gradient(to right, #000000, #ff0000); padding: 0 20px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 1000; color: white; }
         .menu-toggle { font-size: 24px; cursor: pointer; margin-right: 20px; }
         .header-title h1 { margin: 0; font-size: 24px; }
-        .user-profile { display: flex; align-items: center; margin-left: auto; gap: 10px; }
-        .user-icon { width: 35px; height: 35px; border-radius: 50%; background-color: var(--text-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
-
+        .user-profile { display: flex; align-items: center; margin-left: auto; gap: 10px; min-width: 0; /* Ajuda o flexbox a encolher */ }
+        .user-icon { width: 35px; height: 35px; border-radius: 50%; background-color: var(--text-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0; /* Impede que o ícone encolha */ }
+        
+        /* AJUSTE PARA O NOME DO USUÁRIO */
+        .user-profile span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px; /* Ajuste este valor se necessário */
+        }
+        
+        /* ... (restante do CSS permanece o mesmo) ... */
         .filter-panel { background-color: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 150px; }
@@ -51,9 +54,7 @@
         .action-btn:hover { opacity: 0.9; }
         .action-btn.primary { background-color: var(--primary-color); }
         .action-btn.secondary { background-color: var(--dark-gray); }
-
         .cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        /* ... (restante do CSS dos cards, etc. permanece igual) ... */
     </style>
 </head>
 <body>
@@ -65,7 +66,7 @@
             <li class="active" onclick="window.location.href='dashboard.html'"><i class="fas fa-home"></i> Página Inicial</li>
             <li onclick="window.location.href='upload.html'"><i class="fas fa-upload"></i> Enviar Canhoto</li>
             <li id="cadastrar-nav-link" style="display: none;" onclick="window.location.href='admin_cadastro.html'"><i class="fas fa-user-plus"></i> Cadastrar Usuário</li>
-            <li id="logout-button" class="logout-button-sidebar"><i class="fas fa-sign-out-alt"></i> Sair</li>
+            <li id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</li>
         </ul>
     </aside>
 
@@ -78,7 +79,7 @@
             <div class="user-profile">
                 <div class="user-icon" id="user-icon">--</div>
                 <span id="user-display-name">Carregando...</span>
-                </div>
+            </div>
         </header>
 
         <div class="filter-panel">
@@ -99,8 +100,7 @@
         <div id="error-message" class="message-container error" style="display: none;"></div>
         <div id="no-canhotos-message" class="message-container" style="display: none;">Nenhum canhoto encontrado.</div>
         
-        <div class="cards-container" id="canhotos-grid">
-            </div>
+        <div class="cards-container" id="canhotos-grid"></div>
 
         <div class="pagination-controls" id="pagination-controls" style="display: none;">
             <button id="prev-page-button" disabled>&laquo; Anterior</button>
