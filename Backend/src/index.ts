@@ -12,8 +12,8 @@ import { body, validationResult } from 'express-validator';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// O frontend envia dados como JSON, então apenas este middleware é necessário.
+app.use(express.json()); 
 app.use(cors());
 
 const frontendPath = path.resolve(__dirname, '../../Frontend');
@@ -37,11 +37,11 @@ declare module 'express-serve-static-core' {
 const verificarToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    if (!token) { return res.status(401).json({ error: "Acesso negado." }); }
+    if (!token) { return res.status(401).json({ error: "Acesso negado. Nenhum token fornecido." }); }
     const secret = process.env.JWT_SECRET;
-    if (!secret) { return res.status(500).json({ error: "Chave secreta não configurada." }); }
+    if (!secret) { return res.status(500).json({ error: "Chave secreta do JWT não configurada." }); }
     jwt.verify(token, secret, (err, decoded) => {
-        if (err) { return res.status(403).json({ error: "Token inválido." }); }
+        if (err) { return res.status(403).json({ error: "Token inválido ou expirado." }); }
         req.usuario = decoded as UsuarioPayload;
         next();
     });
@@ -49,9 +49,11 @@ const verificarToken = (req: Request, res: Response, next: NextFunction) => {
 
 const MASTER_ADMIN_EMAIL = process.env.MASTER_ADMIN_EMAIL || 'givanildo.jose@kikos.com.br';
 const verificarMasterAdmin = (req: Request, res: Response, next: NextFunction) => {
-    if (!req.usuario) { return res.status(401).json({ error: "Não autenticado." }); }
+    if (!req.usuario) {
+        return res.status(401).json({ error: "Acesso negado. Usuário não autenticado." });
+    }
     if (req.usuario.role !== 'admin' || req.usuario.email !== MASTER_ADMIN_EMAIL) {
-        return res.status(403).json({ error: "Não autorizado." });
+        return res.status(403).json({ error: "Acesso negado. Ação permitida apenas para o administrador principal." });
     }
     next();
 };
@@ -78,16 +80,23 @@ const inicializarBanco = async () => {
     const client = await pool.connect();
     try {
         await client.query(queryUsuarios);
+        console.log("Tabela 'usuarios' garantida.");
         await client.query(queryUploads);
+        console.log("Tabela 'uploads' garantida.");
         const res = await client.query("SELECT COUNT(*) as count FROM usuarios WHERE email = $1", [MASTER_ADMIN_EMAIL]);
         if (res.rows[0].count === '0') {
+            console.log("Master Admin não encontrado, criando...");
             const initialAdminPassword = process.env.MASTER_ADMIN_INITIAL_PASSWORD || 'admin123';
-            if (!MASTER_ADMIN_EMAIL || !initialAdminPassword) { return; }
+            if (!MASTER_ADMIN_EMAIL || !initialAdminPassword) {
+                console.error("ERRO: Variáveis de ambiente MASTER_ADMIN_EMAIL e MASTER_ADMIN_INITIAL_PASSWORD devem ser definidas.");
+                return;
+            }
             const hashedPassword = await bcrypt.hash(initialAdminPassword, 10);
             await client.query(
                 "INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)",
                 ['Master Admin', MASTER_ADMIN_EMAIL, hashedPassword, 'admin']
             );
+            console.log('Usuário Master Admin criado com sucesso!');
         }
     } catch (err) {
         console.error('Erro durante a inicialização do banco de dados:', err);
@@ -97,13 +106,15 @@ const inicializarBanco = async () => {
 };
 
 app.post("/cadastrar", verificarToken, verificarMasterAdmin, [
-    body('nome').trim().notEmpty(),
-    body('email').isEmail().normalizeEmail(),
-    body('senha').isLength({ min: 8 }),
-    body('role').isIn(['transportador', 'colaborador', 'admin'])
+    body('nome').trim().notEmpty().withMessage('O nome é obrigatório.'),
+    body('email').isEmail().withMessage('Por favor, insira um email válido.').normalizeEmail(),
+    body('senha').isLength({ min: 8 }).withMessage('A senha deve ter no mínimo 8 caracteres.'),
+    body('role').isIn(['transportador', 'colaborador', 'admin']).withMessage('O tipo de usuário é inválido.')
 ], async (req: Request, res: Response) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) { return res.status(400).json({ errors: errors.array() }); }
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
     const { nome, email, senha, role } = req.body;
     try {
         const senhaHash = await bcrypt.hash(senha, 10);
@@ -144,28 +155,17 @@ app.post("/upload", verificarToken, [
     body('nf').trim().notEmpty(),
     body('imageUrl').isURL()
 ], async (req: Request, res: Response) => {
-    
-    // --- NOVOS LOGS DE DIAGNÓSTICO ---
-    console.log("--- DIAGNÓSTICO DE CORPO DA REQUISIÇÃO ---");
-    console.log(req.body);
-    console.log("Tipo do campo data_entrega:", typeof req.body.data_entrega);
-    // --- FIM DOS NOVOS LOGS ---
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-
-    const { nf, imageUrl } = req.body;
-    let dataEntrega = req.body.data_entrega;
-    if (!dataEntrega || typeof dataEntrega !== 'string' || dataEntrega.trim() === '') {
-        dataEntrega = null;
-    }
-
+    
+    const { nf, imageUrl, data_entrega } = req.body;
+    
     try {
         await pool.query(
             "INSERT INTO uploads (usuario_id, nf, data_entrega, image_url) VALUES ($1, $2, $3, $4)",
-            [req.usuario!.id, nf, dataEntrega, imageUrl]
+            [req.usuario!.id, nf, data_entrega || null, imageUrl]
         );
         res.status(201).json({ msg: "Upload realizado com sucesso!" });
     } catch (err: any) {
