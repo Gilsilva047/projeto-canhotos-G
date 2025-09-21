@@ -37,17 +37,15 @@
         .user-profile { display: flex; align-items: center; margin-left: auto; gap: 10px; }
         .user-icon { width: 35px; height: 35px; border-radius: 50%; background-color: var(--text-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
         .logout-btn { background: none; border: none; cursor: pointer; padding: 5px; margin-left: 15px; }
-        .logout-btn img { width: 24px; height: 24px; filter: brightness(0) invert(1); }
+        .logout-btn img { width: 24px; height: 24px; }
 
         .filter-panel { background-color: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .filters, .main-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 150px; }
         .action-btn { padding: 9px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; color: white; transition: opacity 0.2s; display: flex; align-items: center; gap: 8px; }
         .action-btn:hover { opacity: 0.9; }
         .action-btn.primary { background-color: var(--primary-color); }
         .action-btn.secondary { background-color: var(--dark-gray); }
-        .action-btn.success { background-color: var(--success-color); }
-        .action-btn.info { background-color: var(--info-color); }
 
         .cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .card { background-color: #fff; border: 1px solid #eee; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; }
@@ -68,7 +66,7 @@
         @media (max-width: 768px) {
             .main-content.shifted { margin-left: 0; width: 100%; }
             .filter-panel { flex-direction: column; align-items: stretch; }
-            .filters, .main-actions { width: 100%; flex-direction: column; align-items: stretch; }
+            .filters { width: 100%; }
         }
     </style>
 </head>
@@ -94,7 +92,7 @@
                 <div class="user-icon" id="user-icon">--</div>
                 <span id="user-display-name">Carregando...</span>
                 <button id="logout-button" class="logout-btn" title="Sair">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E" alt="Sair">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E" alt="Sair">
                 </button>
             </div>
         </header>
@@ -110,14 +108,6 @@
                 </div>
                 <button id="aplicar-filtros-button" class="action-btn primary">Aplicar Filtros</button>
                 <button id="limpar-filtros-button" class="action-btn secondary">Limpar</button>
-            </div>
-             <div class="main-actions">
-                <button id="novo-canhoto-button" class="action-btn success">
-                    <i class="fas fa-plus"></i> Adicionar Canhoto
-                </button>
-                <button id="cadastrar-usuario-button" class="action-btn info" style="display: none;">
-                    <i class="fas fa-user-plus"></i> Cadastrar Usuário
-                </button>
             </div>
         </div>
 

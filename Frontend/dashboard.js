@@ -16,8 +16,6 @@ let currentUser = {
 const sidebar = document.getElementById('sidebar');
 const mainContent = document.getElementById('mainContent');
 const menuToggle = document.getElementById('menuToggle');
-const novoCanhotoButton = document.getElementById('novo-canhoto-button');
-const cadastrarUsuarioButton = document.getElementById('cadastrar-usuario-button');
 const cadastrarNavLink = document.getElementById('cadastrar-nav-link');
 const filterNf = document.getElementById('filter-nf');
 const filterDataEntrega = document.getElementById('filter-data-entrega');
@@ -148,9 +146,6 @@ function setupEventListeners() {
         sidebar.classList.toggle('open');
         mainContent.classList.toggle('shifted');
     });
-
-    novoCanhotoButton.addEventListener('click', () => window.location.href = 'upload.html');
-    cadastrarUsuarioButton.addEventListener('click', () => window.location.href = 'admin_cadastro.html');
     
     aplicarFiltrosButton.addEventListener('click', () => {
         currentPage = 1;
@@ -189,7 +184,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentUser.isMasterAdmin = sessionStorage.getItem('isMasterAdmin') === 'true';
 
     if (currentUser.isMasterAdmin) {
-        cadastrarUsuarioButton.style.display = 'flex';
         cadastrarNavLink.style.display = 'flex';
     }
 
