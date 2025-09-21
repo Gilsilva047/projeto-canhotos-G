@@ -4,135 +4,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kikos Canhotos - Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Estilos adicionais para o layout */
-        .grid-canhotos {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
+        :root {
+            --primary-color: #3498db;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --info-color: #9b59b6;
+            --light-gray: #f0f2f5;
+            --dark-gray: #7f8c8d;
+            --text-color: #34495e;
+            --header-height: 60px;
+            --sidebar-width: 250px;
         }
-        .canhoto-card {
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.2s;
-            position: relative; 
-        }
-        .canhoto-card:hover {
-            transform: translateY(-5px);
-        }
-        .canhoto-image-container {
-            width: 100%;
-            height: 200px;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f0f0f0;
-        }
-        .canhoto-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .download-button-card {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 0.5rem;
-            border-radius: 9999px;
-            cursor: pointer;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s;
-        }
-        .download-button-card:hover {
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-        .hidden {
-            display: none;
+
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--light-gray); display: flex; height: 100vh; overflow-x: hidden; }
+
+        .sidebar { width: var(--sidebar-width); background: linear-gradient(to bottom, #000000, #c00000); color: white; position: fixed; height: 100%; transition: transform 0.3s ease; transform: translateX(calc(-1 * var(--sidebar-width))); z-index: 1001; }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-header { padding: 20px; font-size: 1.5rem; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li { padding: 15px 20px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: background-color 0.2s; }
+        .sidebar ul li:hover { background-color: #34495e; }
+        .sidebar ul li.active { background-color: var(--primary-color); }
+
+        .main-content { margin-left: 0; width: 100%; padding: calc(var(--header-height) + 20px) 20px 20px; transition: margin-left 0.3s ease, width 0.3s ease; }
+        .main-content.shifted { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+
+        .header { position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: linear-gradient(to right, #000000, #ff0000); padding: 0 20px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 1000; color: white; }
+        .menu-toggle { font-size: 24px; cursor: pointer; margin-right: 20px; }
+        .header-title h1 { margin: 0; font-size: 24px; }
+        .user-profile { display: flex; align-items: center; margin-left: auto; gap: 10px; }
+        .user-icon { width: 35px; height: 35px; border-radius: 50%; background-color: var(--text-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+        .logout-btn { background: none; border: none; cursor: pointer; padding: 5px; margin-left: 15px; }
+        .logout-btn img { width: 24px; height: 24px; filter: brightness(0) invert(1); }
+
+        .filter-panel { background-color: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .filters, .main-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 150px; }
+        .action-btn { padding: 9px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; color: white; transition: opacity 0.2s; display: flex; align-items: center; gap: 8px; }
+        .action-btn:hover { opacity: 0.9; }
+        .action-btn.primary { background-color: var(--primary-color); }
+        .action-btn.secondary { background-color: var(--dark-gray); }
+        .action-btn.success { background-color: var(--success-color); }
+        .action-btn.info { background-color: var(--info-color); }
+
+        .cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { background-color: #fff; border: 1px solid #eee; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); }
+        .card h3 { margin: 0 0 10px; color: #c00000; font-size: 18px; }
+        .card p { margin: 4px 0; color: var(--dark-gray); font-size: 0.9rem; }
+        .card .card-image-container { height: 180px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; border-radius: 8px; overflow: hidden; }
+        .card .card-image-container img { width: 100%; height: 100%; object-fit: cover; }
+        .card .card-footer { margin-top: auto; padding-top: 10px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; }
+
+        .pagination-controls { display: flex; justify-content: center; align-items: center; margin-top: 25px; gap: 15px; }
+        .pagination-controls button { padding: 8px 16px; border: 1px solid #ddd; background-color: white; border-radius: 4px; cursor: pointer; }
+        .pagination-controls button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+        .message-container { text-align: center; padding: 20px; margin-bottom: 20px; border-radius: 8px; background-color: #e9ecef; color: var(--text-color); }
+        .message-container.error { background-color: #f8d7da; color: #721c24; }
+        
+        @media (max-width: 768px) {
+            .main-content.shifted { margin-left: 0; width: 100%; }
+            .filter-panel { flex-direction: column; align-items: stretch; }
+            .filters, .main-actions { width: 100%; flex-direction: column; align-items: stretch; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-red-700 text-white p-4 shadow-md flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Kikos Canhotos</h1>
-        <div class="flex items-center space-x-3">
-            <i class="fas fa-user-circle text-3xl"></i>
-            <span id="user-display-name" class="font-medium">Carregando...</span>
-            <button id="logout-button" class="ml-4 bg-red-800 hover:bg-red-900 text-white px-3 py-1 rounded-md text-sm">Sair</button>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Menu</h3>
         </div>
-    </header>
+        <ul>
+            <li class="active" onclick="window.location.href='dashboard.html'"><i class="fas fa-home"></i> Página Inicial</li>
+            <li onclick="window.location.href='upload.html'"><i class="fas fa-upload"></i> Enviar Canhoto</li>
+            <li id="cadastrar-nav-link" style="display: none;" onclick="window.location.href='admin_cadastro.html'"><i class="fas fa-user-plus"></i> Cadastrar Usuário</li>
+        </ul>
+    </aside>
 
-    <main class="flex-1 p-6">
-        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
-            <div class="flex flex-col md:flex-row justify-between items-center mb-4 space-y-4 md:space-y-0">
-                <h2 class="text-xl font-semibold text-gray-800">Meus Canhotos</h2>
-                <div class="flex items-center space-x-4">
-                    
-                    
-                    <button id="cadastrar-usuario-button" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md font-semibold flex items-center space-x-2 hidden">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Cadastrar Usuário</span>
-                    </button>
-
-                    
-                    <button id="novo-canhoto-button" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md font-semibold flex items-center space-x-2">
-                        <i class="fas fa-plus"></i>
-                        <span>Novo Canhoto</span>
-                    </button>
-                </div>
+    <div class="main-content" id="mainContent">
+        <header class="header">
+            <div class="menu-toggle" id="menuToggle">≡</div>
+            <div class="header-title">
+                <h1><span class="kikos">Kikos</span> <span class="canhotos">Canhotos</span></h1>
             </div>
+            <div class="user-profile">
+                <div class="user-icon" id="user-icon">--</div>
+                <span id="user-display-name">Carregando...</span>
+                <button id="logout-button" class="logout-btn" title="Sair">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/%3E%3C/svg%3E" alt="Sair">
+                </button>
+            </div>
+        </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
-                    <label for="filter-nf" class="block text-sm font-medium text-gray-700">NF</label>
-                    <input type="text" id="filter-nf" placeholder="Número da NF" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="filter-data-entrega" class="block text-sm font-medium text-gray-700">Data de Entrega</label>
-                    <input type="date" id="filter-data-entrega" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
+        <div class="filter-panel">
+            <div class="filters">
+                <input type="text" id="filter-nf" placeholder="Filtrar por NF">
+                <input type="date" id="filter-data-entrega">
                 <div id="filter-usuario-envio-container" style="display: none;">
-                    <label for="filter-usuario-envio" class="block text-sm font-medium text-gray-700">Usuário de Envio</label>
-                    <select id="filter-usuario-envio" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Todos</option>
+                    <select id="filter-usuario-envio">
+                        <option value="">Filtrar por Usuário</option>
                     </select>
                 </div>
+                <button id="aplicar-filtros-button" class="action-btn primary">Aplicar Filtros</button>
+                <button id="limpar-filtros-button" class="action-btn secondary">Limpar</button>
             </div>
-            <button id="aplicar-filtros-button" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-md">Aplicar Filtros</button>
-            <button id="limpar-filtros-button" class="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md">Limpar Filtros</button>
+             <div class="main-actions">
+                <button id="novo-canhoto-button" class="action-btn success">
+                    <i class="fas fa-plus"></i> Adicionar Canhoto
+                </button>
+                <button id="cadastrar-usuario-button" class="action-btn info" style="display: none;">
+                    <i class="fas fa-user-plus"></i> Cadastrar Usuário
+                </button>
+            </div>
         </div>
 
-        <div id="loading-message" class="text-center text-gray-600 mt-8" style="display: none;">
-            Carregando canhotos...
-        </div>
-        <div id="error-message" class="text-center text-red-600 mt-8" style="display: none;">
-            Não foi possível carregar os canhotos.
-        </div>
-        <div id="no-canhotos-message" class="text-center text-gray-500 mt-8" style="display: none;">
-            Nenhum canhoto encontrado com os filtros aplicados.
-        </div>
+        <div id="loading-message" class="message-container" style="display: none;">Carregando canhotos...</div>
+        <div id="error-message" class="message-container error" style="display: none;"></div>
+        <div id="no-canhotos-message" class="message-container" style="display: none;">Nenhum canhoto encontrado.</div>
+        
+        <div class="cards-container" id="canhotos-grid">
+            </div>
 
-        <div id="canhotos-grid" class="grid-canhotos">
+        <div class="pagination-controls" id="pagination-controls" style="display: none;">
+            <button id="prev-page-button" disabled>&laquo; Anterior</button>
+            <span id="page-info"></span>
+            <button id="next-page-button" disabled>Próximo &raquo;</button>
         </div>
-
-        <div class="flex justify-center items-center space-x-4 mt-8">
-            <button id="prev-page-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md" disabled>Anterior</button>
-            <span id="page-info" class="text-gray-700">Página 1 de 1</span>
-            <button id="next-page-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md" disabled>Próxima</button>
-        </div>
-    </main>
-
+    </div>
+    
+    <script type="module" src="auth.js"></script>
     <script type="module" src="dashboard.js"></script>
 </body>
 </html>
