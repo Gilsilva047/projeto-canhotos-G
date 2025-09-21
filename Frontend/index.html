@@ -1,43 +1,200 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kikos Canhotos - Login</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
 
-    <link rel="stylesheet" href="style.css">
+        :root {
+            --red-kikos: #c00000;
+            --dark-gray: #333;
+            --light-gray-bg: #f0f2f5;
+            --border-color-dark: #444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-gray-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            background: linear-gradient(135deg, #330000, #000000);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            /* EFEITO DE BRILHO CONSTANTE NA CAIXA */
+            border: 1px solid rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px auto;
+            background: linear-gradient(135deg, #222, #000); /* Círculo do logo escuro */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* ESTILO PARA O "K" DO LOGO */
+        .logo-placeholder {
+            font-size: 2.5rem;
+            color: var(--red-kikos);
+            font-weight: 700;
+        }
+
+        h2 {
+            color: #f0f2f5;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 1px solid var(--border-color-dark);
+            background-color: #222;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .input-field::placeholder {
+            color: #888;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--red-kikos);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--red-kikos);
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .login-btn:hover {
+            background-color: #ff0000;
+        }
+        
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        #error-message {
+            color: var(--red-kikos);
+            margin-top: 15px;
+            height: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+    </style>
 </head>
 <body>
-    <div class="login-wrapper">
-        <div class="login-branding">
-            <div class="branding-content">
-               <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAACgCAMAAADSo13PAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABLUExURf///8DAwAAA/wAAAMDAwAAAAP//AP8AAAD/AAAA//8A/wAജ്യAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGCBgYUGFRgAAAAYdFJOU/////////////////////////////////////////////////////////8AXFwbKwAAA6pJREFUeNrt3WFv2zAQAFELM5bJLDfk2t5t2v//JxtJkACBEijhvj25jOFDRp6hVDo+vuf65Lq7pr/eI5BIJBKJRCKRSCQSiUQikUgkEolEIpFIJBKJ/E/y3/3y8l9y7XWfT6p9i9/71v238/P307+Wr810K0J/r2/aX//I38ub9p4pQd/fD6d//P8mfi3fO+lB/M38vHwnpAdxeD438/H/JH4uXxnpAd/Pp+a/5O/l6/M+Jt/P1+Z/Vf5cvi/pge/nq/M/l/+v8iXRa2lB3x+vjb/r/Ln8n1J91I64Pv52vy/yrfL9yXdR+yA7+fr838u3yjfT7qX2AG/n6/P/7t8o3w/6V5yB/x+vj7/7/KN8v2ke8kdcPr52vy/yjfL95PuJXXA6edr8/8u3yjfn3QvsQNOv15f/v/KN8r3k+4ld8Dp52vz/y7fKN+fdC+xA06/Xl/+v8o3yveT7iV3wOnna/P/Lt8o3590L7EDTr9eX/6/yjfK95PuJXfA6edr8/8u3yjfn3QvsQNOv15f/v/KN8r3k+4ld8Dp52vz/y7fKN+fdC+xA06/Xl/+v8o3yveT7iV3wOnna/P/Lt8o3590L7EDTr9eX/6/yjfK95PuJXfA6edr8/8u3yjfn3QvsQNOv15f/v/KN8r3k+4ld8Dp52vz/y7fKN+fdC+xA06/Xl/+v8o3yveT7iV3wOnna/P/Lt8o3590L7EDTr9eX/6/yjfK95PuJXfA6edr8/8u3yjfn3QvsQNOv15f/v/KN8r3k+4ld8Dp52vz/y7fKN+fdC+xA06/Xl/+v8o3yveT7iV3wOnna/P/Lt8o3590L7EDTr9eX/6/yjfK95PuJXfA6edr8/8u3yjfn3QvsQNOv15f/v/KN8r3k+4ld8Dp52vz/y7fKN+fdC+xA06/Xl/+v8o3yveT7iV3wOnna/P/Lt8o3590L7EDTr9eX/6/yjfK95PuJXfA6edr8/8u3yjfn3QvsQNOv15f/v/KN8r3k+4ld8Dp52vz/y7fKN+fdC+xA06/Xl/+v8o3yve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" alt="Kikos Canhotos Logo" class="logo-image">
-            </div>
-        </div>
 
-        <div class="login-form-wrapper">
-            <form id="login-form">
-                <h2>Acesse sua conta</h2>
-                <div class="input-group">
-                    <i class="fas fa-envelope input-icon"></i>
-                    <input type="email" id="email" name="email" placeholder="Seu e-mail" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="senha" name="senha" placeholder="Sua senha" required>
-                </div>
-                <button type="submit">ENTRAR</button>
-                <p id="error-message" class="error"></p>
-            </form>
+    <div class="login-container">
+        <div class="logo">
+            <span class="logo-placeholder">K</span>
         </div>
+        <h2>Acesse sua Conta</h2>
+        <form id="login-form">
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" class="input-field" placeholder="Email" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="senha" class="input-field" placeholder="Senha" required>
+            </div>
+            <button type="submit" class="login-btn">Entrar</button>
+            <p id="error-message"></p>
+        </form>
     </div>
 
-    <script type="module" src="login.js"></script>
+    <script type="module">
+        import { API_BASE_URL } from './config.js';
+
+        const loginForm = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            errorMessage.textContent = '';
+
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const submitButton = event.target.querySelector('button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Entrando...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    sessionStorage.setItem('authToken', data.token);
+                    sessionStorage.setItem('userRole', data.role);
+                    sessionStorage.setItem('userName', data.userName);
+                    sessionStorage.setItem('userId', data.userId);
+                    sessionStorage.setItem('userEmail', data.userEmail);
+                    sessionStorage.setItem('isMasterAdmin', data.isMasterAdmin);
+                    window.location.href = 'dashboard.html';
+                } else {
+                    errorMessage.textContent = data.error || 'Ocorreu um erro.';
+                }
+            } catch (error) {
+                console.error('Erro ao tentar fazer login:', error);
+                errorMessage.textContent = 'Falha na conexão com o servidor.';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Entrar';
+            }
+        });
+    </script>
 </body>
 </html>
