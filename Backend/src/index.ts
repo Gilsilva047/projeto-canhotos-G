@@ -12,22 +12,18 @@ import { body, validationResult } from 'express-validator';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// === MIDDLEWARES ===
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-// === SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ===
 const frontendPath = path.resolve(__dirname, '../../Frontend');
 app.use(express.static(frontendPath));
 
-// === CONFIGURAÇÃO DO BANCO DE DADOS ===
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
-// === MIDDLEWARE DE AUTENTICAÇÃO ===
 interface UsuarioPayload {
     id: number;
     role: string;
@@ -51,7 +47,6 @@ const verificarToken = (req: Request, res: Response, next: NextFunction) => {
     });
 };
 
-// === MIDDLEWARE DE AUTORIZAÇÃO ===
 const MASTER_ADMIN_EMAIL = process.env.MASTER_ADMIN_EMAIL || 'givanildo.jose@kikos.com.br';
 const verificarMasterAdmin = (req: Request, res: Response, next: NextFunction) => {
     if (!req.usuario) {
@@ -63,7 +58,6 @@ const verificarMasterAdmin = (req: Request, res: Response, next: NextFunction) =
     next();
 };
 
-// === INICIALIZAÇÃO DO BANCO DE DADOS ===
 const inicializarBanco = async () => {
     const queryUsuarios = `
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -111,7 +105,6 @@ const inicializarBanco = async () => {
     }
 };
 
-// === ROTAS ===
 app.post("/cadastrar", verificarToken, verificarMasterAdmin, [
     body('nome').trim().notEmpty().withMessage('O nome é obrigatório.'),
     body('email').isEmail().withMessage('Por favor, insira um email válido.').normalizeEmail(),
@@ -125,8 +118,8 @@ app.post("/cadastrar", verificarToken, verificarMasterAdmin, [
     const { nome, email, senha, role } = req.body;
     try {
         const senhaHash = await bcrypt.hash(senha, 10);
-        await pool.query("INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)", [nome, email, senhaHash, role]);
-        res.status(201).json({ msg: "Usuário cadastrado com sucesso!" });
+        const result = await pool.query("INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4) RETURNING id", [nome, email, senhaHash, role]);
+        res.status(201).json({ msg: "Usuário cadastrado com sucesso!", id: result.rows[0].id, role: role });
     } catch (err: any) {
         if (err.code === '23505') return res.status(400).json({ error: "Email já está cadastrado" });
         return res.status(500).json({ error: "Ocorreu um erro ao cadastrar o usuário." });
@@ -159,26 +152,26 @@ app.post("/login", async (req: Request, res: Response) => {
 });
 
 app.post("/upload", verificarToken, [
-    body('nf').trim().notEmpty().withMessage('O número da NF é obrigatório.'),
-    body('imageUrl').isURL().withMessage('A URL da imagem é inválida.')
+    body('nf').trim().notEmpty(),
+    body('imageUrl').isURL()
 ], async (req: Request, res: Response) => {
+    // LINHA DE DIAGNÓSTICO
+    console.log("--- EXECUTANDO NOVA VERSÃO DA ROTA UPLOAD (v2) ---");
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    // CORREÇÃO APLICADA AQUI
-    let { nf, data_entrega, imageUrl } = req.body;
-    
-    // Garante que se 'data_entrega' for uma string vazia ou não existir, ela se torne null.
-    if (!data_entrega) {
-        data_entrega = null;
-    }
-    
+    const { nf, imageUrl } = req.body;
+    // LÓGICA REFORÇADA PARA TRATAR A DATA
+    const dataEntrega = req.body.data_entrega ? req.body.data_entrega : null;
+
     try {
+        console.log(`Recebido para salvar: NF=${nf}, Data=${dataEntrega}, URL=${imageUrl}`);
         await pool.query(
             "INSERT INTO uploads (usuario_id, nf, data_entrega, image_url) VALUES ($1, $2, $3, $4)",
-            [req.usuario!.id, nf, data_entrega, imageUrl]
+            [req.usuario!.id, nf, dataEntrega, imageUrl]
         );
         res.status(201).json({ msg: "Upload realizado com sucesso!" });
     } catch (err: any) {
@@ -247,13 +240,11 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// === MIDDLEWARE DE ERROS ===
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error('ERRO NÃO TRATADO:', err);
     return res.status(500).json({ error: 'Ocorreu um erro inesperado no servidor.' });
 });
 
-// === INICIAR SERVIDOR ===
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
     inicializarBanco().catch(console.error);
