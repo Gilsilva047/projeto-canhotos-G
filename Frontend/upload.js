@@ -1,33 +1,25 @@
-// Frontend/upload.js
 import { API_BASE_URL, authenticatedFetch, initializeAuthAndUserDisplay, showPageMessage } from './auth.js';
 
-// --- ELEMENTOS DA UI ---
 const uploadForm = document.getElementById('uploadForm');
 const messageDiv = document.getElementById('message');
 const backToDashboardButton = document.getElementById('back-to-dashboard-button');
 const submitButton = document.getElementById('submit-button');
+const IMGBB_API_KEY = 'dae2afc5f13fa9475055a1b3627ea483'; // Sua chave da API
 
-// --- CHAVE DA API ---
-const IMGBB_API_KEY = 'dae2afc5f13fa9475055a1b3627ea483'; 
-
-// --- FUNÇÃO PARA ENVIAR IMAGEM AO IMGBB ---
 async function uploadImageToImgBB(imageFile) {
     const formData = new FormData();
     formData.append('image', imageFile);
-
     const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
         method: 'POST',
         body: formData,
     });
-
     const data = await response.json();
     if (!data.success) {
-        throw new Error(`Erro no upload para o ImgBB: ${data.error.message}`);
+        throw new Error(`Erro no ImgBB: ${data.error.message}`);
     }
-    return data.data.url; // Retorna a URL da imagem
+    return data.data.url;
 }
 
-// --- EVENT LISTENERS ---
 backToDashboardButton.addEventListener('click', () => {
     window.location.href = 'dashboard.html';
 });
@@ -54,16 +46,16 @@ uploadForm.addEventListener('submit', async (event) => {
     }
 
     try {
-        showPageMessage('message', 'Enviando imagem para o servidor externo...', 'text-blue-600');
+        showPageMessage('message', 'Enviando imagem...', 'text-blue-600');
         const imageUrl = await uploadImageToImgBB(arquivo);
 
         const canhotoData = {
             nf: nf,
-            data_entrega: data_entrega || null,
+            data_entrega: dataEntrega || null,
             imageUrl: imageUrl
         };
         
-        showPageMessage('message', 'Salvando informações no banco de dados...', 'text-blue-600');
+        showPageMessage('message', 'Salvando informações...', 'text-blue-600');
         await authenticatedFetch(`${API_BASE_URL}/upload`, {
             method: 'POST',
             body: canhotoData
@@ -85,7 +77,6 @@ uploadForm.addEventListener('submit', async (event) => {
     }
 });
 
-// --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
     initializeAuthAndUserDisplay();
 });
