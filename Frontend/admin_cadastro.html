@@ -3,99 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Novo Usuário (Admin)</title>
+    <title>Cadastro de Novo Usuário - Kikos Canhotos</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         :root {
+            --light-gray-bg: #f0f2f5;
+            --header-height: 60px;
+            --sidebar-width: 250px;
             --red-kikos: #c00000;
         }
-        .hidden { display: none; }
-        .form-container {
-            background: linear-gradient(135deg, #330000, #000000);
-            border-radius: 12px;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-            border: 1px solid rgba(255, 0, 0, 0.2);
-        }
-        .form-container input, .form-container select {
-            background-color: #222;
-            border-color: #444;
-            color: #fff;
-        }
-        .form-container input::placeholder {
-            color: #888;
-        }
-        .form-container input:focus, .form-container select:focus {
-            border-color: var(--red-kikos);
-            box-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
-            --tw-ring-color: transparent; /* Desativa o anel padrão do Tailwind */
-            outline: none;
-        }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--light-gray-bg); display: flex; height: 100vh; overflow-x: hidden; }
+        .sidebar { width: var(--sidebar-width); background: linear-gradient(to bottom, #000000, #c00000); color: white; position: fixed; height: 100%; transition: transform 0.3s ease; transform: translateX(calc(-1 * var(--sidebar-width))); z-index: 1001; display: flex; flex-direction: column; }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar-header { padding: 20px; font-size: 1.5rem; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .sidebar ul li { padding: 15px 20px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: background-color 0.2s; }
+        .sidebar ul li:hover { background-color: #34495e; }
+        .sidebar ul li.active-link { background-color: #3498db; }
+        #logout-button { margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.2); }
+        .main-content { margin-left: 0; width: 100%; transition: margin-left 0.3s ease; }
+        .main-content.shifted { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        .header { position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: linear-gradient(to right, #000000, #ff0000); padding: 0 20px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 1000; color: white; }
+        .header-left { display: flex; align-items: center; gap: 20px; min-width: 0; }
+        .menu-toggle { font-size: 24px; cursor: pointer; }
+        .header-title h1 { margin: 0; font-size: 24px; white-space: nowrap; }
+        .user-profile { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .user-icon { width: 35px; height: 35px; border-radius: 50%; background-color: #34495e; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0; }
+        .user-profile span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .content-wrapper { padding-top: var(--header-height); display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100%; padding: 1rem; box-sizing: border-box; }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-    <div class="form-container p-8 rounded-lg w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-6 text-center text-white">Cadastrar Novo Usuário</h2>
-        <div id="loading-message" class="text-center text-blue-400 hidden">Verificando permissões...</div>
-        <div id="auth-error" class="text-center text-red-500 hidden mb-4"></div>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+        </div>
+        <ul>
+            <li onclick="window.location.href='dashboard.html'"><i class="fas fa-home"></i> Página Inicial</li>
+            <li onclick="window.location.href='upload.html'"><i class="fas fa-upload"></i> Enviar Canhoto</li>
+            <li id="cadastrar-nav-link" class="active-link" style="display: none;" onclick="window.location.href='admin_cadastro.html'"><i class="fas fa-user-plus"></i> Cadastrar Usuário</li>
+            <li id="logout-button"><i class="fas fa-sign-out-alt"></i> Sair</li>
+        </ul>
+    </aside>
+    <div class="main-content" id="mainContent">
+        <header class="header">
+            <div class="header-left">
+                <div class="menu-toggle" id="menuToggle">≡</div>
+                <div class="header-title">
+                    <h1>Cadastrar Usuário</h1>
+                </div>
+            </div>
+            <div class="user-profile">
+                <div class="user-icon" id="user-icon">--</div>
+                <span id="user-display-name">Carregando...</span>
+            </div>
+        </header>
 
-        <form id="cadastroForm" class="space-y-4 hidden">
-            <div>
-                <label for="nome" class="block text-sm font-medium text-gray-300">Nome</label>
-                <input
-                    type="text"
-                    id="nome"
-                    name="nome"
-                    class="mt-1 block w-full p-2 border rounded-md"
-                    placeholder="Nome completo do novo usuário"
-                    required
-                />
-            </div>
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-300">Email</label>
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    class="mt-1 block w-full p-2 border rounded-md"
-                    placeholder="Email do novo usuário"
-                    required
-                />
-            </div>
-            <div>
-                <label for="senha" class="block text-sm font-medium text-gray-300">Senha</label>
-                <input
-                    type="password"
-                    id="senha"
-                    name="senha"
-                    class="mt-1 block w-full p-2 border rounded-md"
-                    placeholder="Senha para o novo usuário"
-                    required
-                />
-                <p class="text-xs text-gray-400 mt-1">A senha deve ter no mínimo 8 caracteres.</p>
-            </div>
-            <div>
-                <label for="role" class="block text-sm font-medium text-gray-300">Tipo de Usuário</label>
-                <select
-                    id="role"
-                    name="role"
-                    class="mt-1 block w-full p-2 border rounded-md"
-                    required
-                >
-                    <option value="transportador">Transportadora</option>
-                    <option value="colaborador">Colaborador</option>
-                    <option value="admin">Administrador</option>
-                </select>
-            </div>
-            <button
-                type="submit"
-                class="w-full bg-red-600 text-white p-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-                Cadastrar Usuário
-            </button>
-        </form>
-        <div id="message" class="mt-4 text-center"></div>
-        <button id="backToDashboard" class="w-full bg-gray-600 text-white p-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-4">Voltar para o Dashboard</button>
+        <main class="content-wrapper">
+            <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Cadastrar Novo Usuário</h2>
+                <div id="loading-message" class="text-center text-blue-500 hidden">Verificando permissões...</div>
+                <div id="auth-error" class="text-center text-red-500 hidden mb-4"></div>
+        
+                <form id="cadastroForm" class="space-y-4 hidden">
+                    <div>
+                        <label for="nome" class="block text-sm font-medium text-gray-700">Nome</label>
+                        <input type="text" id="nome" name="nome" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Nome completo" required />
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="email" name="email" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Email do novo usuário" required />
+                    </div>
+                    <div>
+                        <label for="senha" class="block text-sm font-medium text-gray-700">Senha</label>
+                        <input type="password" id="senha" name="senha" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Mínimo 8 caracteres" required />
+                    </div>
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700">Tipo de Usuário</label>
+                        <select id="role" name="role" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                            <option value="transportador">Transportadora</option>
+                            <option value="colaborador">Colaborador</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 text-white p-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Cadastrar Usuário
+                    </button>
+                </form>
+                <div id="message" class="mt-4 text-center"></div>
+                </div>
+        </main>
     </div>
+    <script type="module" src="auth.js"></script>
     <script type="module" src="admin_cadastro.js"></script>
+    <script>
+        // Script para controlar a sidebar nesta página
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const menuToggle = document.getElementById('menuToggle');
+
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                mainContent.classList.toggle('shifted');
+            });
+        });
+    </script>
 </body>
 </html>
