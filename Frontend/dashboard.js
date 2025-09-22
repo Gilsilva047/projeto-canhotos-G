@@ -55,7 +55,7 @@ function formatDate(isoString) {
     if (!isoString) return 'Não informada';
     const date = new Date(isoString);
     const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
+    return new Date(date.getTime() + userTimezoneOffset).toLocaleDateDateString('pt-BR');
 }
 
 function downloadFile(event, fileUrl) {
@@ -111,7 +111,8 @@ function renderCanhotos(uploads) {
 
     uploads.forEach(canhoto => {
         const card = document.createElement('div');
-        card.className = 'canhoto-card';
+        // --- CORREÇÃO APLICADA AQUI ---
+        card.className = 'image-card'; // Estava 'canhoto-card'
         
         const fileUrl = canhoto.image_url; 
         const isImage = fileUrl && fileUrl.match(/\.(jpeg|jpg|png|gif)$/i);
