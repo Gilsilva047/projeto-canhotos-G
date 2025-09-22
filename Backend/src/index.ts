@@ -12,8 +12,7 @@ import { body, validationResult } from 'express-validator';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// O frontend envia dados como JSON, então apenas este middleware é necessário.
-app.use(express.json()); 
+app.use(express.json());
 app.use(cors());
 
 const frontendPath = path.resolve(__dirname, '../../Frontend');
@@ -83,9 +82,9 @@ const inicializarBanco = async () => {
         console.log("Tabela 'usuarios' garantida.");
         await client.query(queryUploads);
         console.log("Tabela 'uploads' garantida.");
-        const res = await client.query("SELECT COUNT(*) as count FROM usuarios WHERE email = $1", [MASTER_ADMIN_EMAIL]);
+        const res = await client.query("SELECT COUNT(*) as count FROM usuarios");
         if (res.rows[0].count === '0') {
-            console.log("Master Admin não encontrado, criando...");
+            console.log("Nenhum usuário encontrado, criando o Admin inicial...");
             const initialAdminPassword = process.env.MASTER_ADMIN_INITIAL_PASSWORD || 'admin123';
             if (!MASTER_ADMIN_EMAIL || !initialAdminPassword) {
                 console.error("ERRO: Variáveis de ambiente MASTER_ADMIN_EMAIL e MASTER_ADMIN_INITIAL_PASSWORD devem ser definidas.");
@@ -94,9 +93,10 @@ const inicializarBanco = async () => {
             const hashedPassword = await bcrypt.hash(initialAdminPassword, 10);
             await client.query(
                 "INSERT INTO usuarios (nome, email, senha, role) VALUES ($1, $2, $3, $4)",
-                ['Master Admin', MASTER_ADMIN_EMAIL, hashedPassword, 'admin']
+                // --- NOME DO USUÁRIO ALTERADO AQUI ---
+                ['Givanildo Silva', MASTER_ADMIN_EMAIL, hashedPassword, 'admin']
             );
-            console.log('Usuário Master Admin criado com sucesso!');
+            console.log('Usuário Admin inicial criado com sucesso!');
         }
     } catch (err) {
         console.error('Erro durante a inicialização do banco de dados:', err);
