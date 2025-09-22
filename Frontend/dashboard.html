@@ -21,10 +21,8 @@
         .sidebar ul li:hover { background-color: #34495e; }
         .sidebar ul li.active-link { background-color: #3498db; }
         #logout-button { margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.2); }
-
         .main-content { margin-left: 0; width: 100%; transition: margin-left 0.3s ease; }
         .main-content.shifted { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
-
         .header { position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: linear-gradient(to right, #000000, #ff0000); padding: 0 20px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); z-index: 1000; color: white; }
         .header-left { display: flex; align-items: center; gap: 20px; min-width: 0; }
         .menu-toggle { font-size: 24px; cursor: pointer; }
@@ -32,41 +30,25 @@
         .user-profile { display: flex; align-items: center; gap: 10px; min-width: 0; }
         .user-icon { width: 35px; height: 35px; border-radius: 50%; background-color: #34495e; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0; }
         .user-profile span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
         .filter-panel { padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; background-color: white; }
         .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; min-width: 150px; }
-        .action-btn { padding: 9px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; color: white; transition: opacity 0.2s; }
+        .action-btn { padding: 9px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; color: white; transition: opacity 0.2s; display: flex; align-items: center; gap: 8px; }
         .action-btn.primary { background-color: #3498db; }
         .action-btn.secondary { background-color: #7f8c8d; }
-
         .cards-container-wrapper { padding: 80px 20px 20px 20px; }
-        .cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-        .image-card {
-            position: relative;
-            background-color: #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            aspect-ratio: 4 / 3;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-        .image-card:hover { transform: scale(1.03); }
-        .image-card img, .image-card .pdf-icon { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .image-card .pdf-icon { display: flex; align-items: center; justify-content: center; font-size: 5rem; color: var(--red-kikos); }
-        .image-card .overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); color: white; padding: 20px 10px 10px 10px; }
-        .overlay h3 { margin: 0 0 5px 0; font-size: 1rem; font-weight: bold; }
-        .overlay p { margin: 0; font-size: 0.8rem; opacity: 0.9; }
-
+        .cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .canhoto-card { background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .card-image-wrapper { aspect-ratio: 4 / 3; background-color: #e0e0e0; cursor: pointer; }
+        .card-image-wrapper img, .card-image-wrapper .pdf-icon { width: 100%; height: 100%; object-fit: cover; }
+        .card-image-wrapper .pdf-icon { display: flex; align-items: center; justify-content: center; font-size: 5rem; color: var(--red-kikos); }
+        .card-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-info h3 { margin: 0 0 10px 0; font-size: 1.1rem; font-weight: bold; color: var(--red-kikos); }
+        .card-info p { margin: 2px 0; font-size: 0.9rem; color: #555; }
+        .card-footer { margin-top: auto; padding-top: 15px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; }
         .pagination-controls { display: flex; justify-content: center; align-items: center; margin-top: 25px; gap: 15px; padding-bottom: 20px; }
         .pagination-controls button { padding: 8px 16px; border: 1px solid #ddd; background-color: white; border-radius: 4px; cursor: pointer; }
         .pagination-controls button:disabled { cursor: not-allowed; opacity: 0.5; }
-
         .lightbox { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
         .lightbox-content { max-width: 90%; max-height: 90%; display: block; }
         .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
@@ -127,13 +109,4 @@
             
             <div class="pagination-controls" id="pagination-controls" style="display: none;">
                 <button id="prev-page-button" disabled>&laquo; Anterior</button>
-                <span id="page-info"></span>
-                <button id="next-page-button" disabled>Próximo &raquo;</button>
-            </div>
-        </div>
-    </div>
-    
-    <script type="module" src="auth.js"></script>
-    <script type="module" src="dashboard.js"></script>
-</body>
-</html>
+                <span id="page-info

@@ -5,7 +5,6 @@ let currentPage = 1;
 let totalPages = 1;
 let currentUser = { role: '', id: '', isMasterAdmin: false };
 
-// --- Elementos da UI ---
 const sidebar = document.getElementById('sidebar');
 const mainContent = document.getElementById('mainContent');
 const menuToggle = document.getElementById('menuToggle');
@@ -24,30 +23,34 @@ const paginationControls = document.getElementById('pagination-controls');
 const prevPageButton = document.getElementById('prev-page-button');
 const nextPageButton = document.getElementById('next-page-button');
 const pageInfo = document.getElementById('page-info');
-
-// --- Elementos do Lightbox (Zoom) ---
 const lightbox = document.getElementById('imageLightbox');
 const lightboxImage = document.getElementById('lightboxImage');
 const lightboxClose = document.getElementById('lightboxClose');
 
-// --- Lógica do Lightbox ---
 function openLightbox(imageUrl) {
-    lightboxImage.src = imageUrl;
-    lightbox.style.display = 'flex';
+    if (lightbox && lightboxImage) {
+        lightboxImage.src = imageUrl;
+        lightbox.style.display = 'flex';
+    }
 }
 
 function closeLightbox() {
-    lightbox.style.display = 'none';
+    if (lightbox) {
+        lightbox.style.display = 'none';
+    }
 }
 
-lightboxClose.addEventListener('click', closeLightbox);
-lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) {
-        closeLightbox();
-    }
-});
+if(lightboxClose) {
+    lightboxClose.addEventListener('click', closeLightbox);
+}
+if(lightbox) {
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) {
+            closeLightbox();
+        }
+    });
+}
 
-// --- Funções Auxiliares ---
 function formatDate(isoString) {
     if (!isoString) return 'Não informada';
     const date = new Date(isoString);
@@ -55,7 +58,18 @@ function formatDate(isoString) {
     return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
 }
 
-// --- Funções de Carregamento e Renderização ---
+function downloadFile(event, fileUrl) {
+    event.stopPropagation();
+    const fileName = `canhoto-${Date.now()}`;
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 async function loadCanhotos() {
     loadingMessage.style.display = 'block';
     errorMessage.style.display = 'none';
@@ -94,30 +108,52 @@ async function loadCanhotos() {
 
 function renderCanhotos(uploads) {
     canhotosGrid.innerHTML = '';
+
     uploads.forEach(canhoto => {
         const card = document.createElement('div');
-        card.className = 'image-card';
+        card.className = 'canhoto-card';
         
         const fileUrl = canhoto.image_url; 
         const isImage = fileUrl && fileUrl.match(/\.(jpeg|jpg|png|gif)$/i);
 
-        let content = '';
+        let imageContent = '';
         if (isImage) {
-            content = `<img src="${fileUrl}" alt="Canhoto NF ${canhoto.nf}">`;
-            card.addEventListener('click', () => openLightbox(fileUrl));
+            imageContent = `<img src="${fileUrl}" alt="Canhoto NF ${canhoto.nf}">`;
         } else {
-            content = `<div class="pdf-icon"><i class="fas fa-file-pdf"></i></div>`;
-            card.addEventListener('click', () => window.open(fileUrl, '_blank'));
+            imageContent = `<div class="pdf-icon"><i class="fas fa-file-pdf"></i></div>`;
         }
-        
+
         card.innerHTML = `
-            ${content}
-            <div class="overlay">
-                <h3>NF: ${canhoto.nf}</h3>
-                <p>Por: ${canhoto.usuario_nome}</p>
-                <p>Data: ${formatDate(canhoto.data_entrega)}</p>
+            <div class="card-image-wrapper">
+                ${imageContent}
+            </div>
+            <div class="card-info">
+                <div>
+                    <h3>NF: ${canhoto.nf}</h3>
+                    <p><strong>Enviado por:</strong> ${canhoto.usuario_nome}</p>
+                    <p><strong>Data:</strong> ${formatDate(canhoto.data_entrega)}</p>
+                </div>
+                <div class="card-footer">
+                    <button class="action-btn primary download-btn">
+                        <i class="fas fa-download"></i> Baixar
+                    </button>
+                </div>
             </div>
         `;
+
+        const imageWrapper = card.querySelector('.card-image-wrapper');
+        const downloadBtn = card.querySelector('.download-btn');
+        
+        if (isImage) {
+            imageWrapper.addEventListener('click', () => openLightbox(fileUrl));
+        } else {
+            imageWrapper.addEventListener('click', () => window.open(fileUrl, '_blank'));
+        }
+        
+        if(downloadBtn) {
+            downloadBtn.addEventListener('click', (e) => downloadFile(e, fileUrl));
+        }
+
         canhotosGrid.appendChild(card);
     });
 }
