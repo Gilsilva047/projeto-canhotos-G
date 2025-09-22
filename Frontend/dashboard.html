@@ -38,17 +38,68 @@
         .action-btn.secondary { background-color: #7f8c8d; }
         .cards-container-wrapper { padding: 80px 20px 20px 20px; }
         .cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .canhoto-card { background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-        .card-image-wrapper { aspect-ratio: 4 / 3; background-color: #e0e0e0; cursor: pointer; }
-        .card-image-wrapper img, .card-image-wrapper .pdf-icon { width: 100%; height: 100%; object-fit: cover; }
-        .card-image-wrapper .pdf-icon { display: flex; align-items: center; justify-content: center; font-size: 5rem; color: var(--red-kikos); }
-        .card-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
-        .card-info h3 { margin: 0 0 10px 0; font-size: 1.1rem; font-weight: bold; color: var(--red-kikos); }
-        .card-info p { margin: 2px 0; font-size: 0.9rem; color: #555; }
-        .card-footer { margin-top: auto; padding-top: 15px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; }
+
+        /* --- ESTILOS ATUALIZADOS PARA O CARD --- */
+        .canhoto-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0; /* Borda visual */
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08); /* Sombra mais destacada */
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease-in-out;
+        }
+        .canhoto-card:hover {
+            transform: translateY(-5px); /* Efeito de elevação ao passar o mouse */
+        }
+        .card-image-wrapper {
+            aspect-ratio: 16 / 9; /* Proporção da imagem um pouco mais horizontal */
+            background-color: #f8f8f8;
+            cursor: pointer;
+            padding: 10px; /* Diminui visualmente a foto com padding */
+            box-sizing: border-box; /* Garante que o padding não aumente o tamanho total */
+        }
+        .card-image-wrapper img, .card-image-wrapper .pdf-icon {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 'contain' para não cortar a imagem, 'cover' para preencher */
+            display: block;
+        }
+        .card-image-wrapper .pdf-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem; /* Ícone menor, mais discreto */
+            color: var(--red-kikos);
+        }
+        .card-info {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            text-align: center; /* Centraliza o texto */
+        }
+        .card-info h3 { margin: 0 0 8px 0; font-size: 1.1rem; font-weight: bold; color: #333; }
+        .card-info p { margin: 2px 0; font-size: 0.85rem; color: #666; }
+        .card-footer { 
+            margin-top: auto; 
+            padding: 10px 15px 15px; 
+            border-top: 1px solid #f0f0f0; 
+            display: flex; 
+            justify-content: center; /* Centraliza o botão */
+        }
+        /* Estilo para o botão de download apenas com ícone */
+        .action-btn.download-btn {
+            padding: 8px 12px; /* Ajusta o padding para o ícone */
+            gap: 0; /* Remove espaço se houver texto oculto */
+        }
+
+
         .pagination-controls { display: flex; justify-content: center; align-items: center; margin-top: 25px; gap: 15px; padding-bottom: 20px; }
         .pagination-controls button { padding: 8px 16px; border: 1px solid #ddd; background-color: white; border-radius: 4px; cursor: pointer; }
         .pagination-controls button:disabled { cursor: not-allowed; opacity: 0.5; }
+
         .lightbox { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
         .lightbox-content { max-width: 90%; max-height: 90%; display: block; }
         .lightbox-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
