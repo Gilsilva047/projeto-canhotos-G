@@ -58,16 +58,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
     }
 
-    function downloadFile(event, fileUrl) {
+    // --- FUNÇÃO DE DOWNLOAD ATUALIZADA ---
+    async function downloadFile(event, fileUrl, nf) {
         event.stopPropagation();
-        const fileName = `canhoto-${Date.now()}`;
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = fileName;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const button = event.currentTarget;
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Mostra ícone de loading
+        button.disabled = true;
+
+        try {
+            // Usa fetch para buscar a imagem como um 'blob'
+            const response = await fetch(fileUrl);
+            if (!response.ok) throw new Error('Não foi possível buscar a imagem para download.');
+
+            const blob = await response.blob();
+            const objectUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            
+            // Tenta pegar a extensão do arquivo da URL original
+            const extension = fileUrl.split('.').pop() || 'jpg';
+            link.download = `canhoto-NF-${nf}.${extension}`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            window.URL.revokeObjectURL(objectUrl); // Libera a memória
+        } catch (error) {
+            console.error('Erro ao baixar o arquivo:', error);
+            // Se o método avançado falhar, abre a imagem em uma nova aba como alternativa
+            window.open(fileUrl, '_blank');
+        } finally {
+            button.innerHTML = originalIcon; // Restaura o ícone original
+            button.disabled = false;
+        }
     }
 
     async function loadCanhotos() {
@@ -110,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         canhotosGrid.innerHTML = '';
         uploads.forEach(canhoto => {
             const card = document.createElement('div');
-            card.className = 'canhoto-card'; 
+            card.className = 'canhoto-card';
             const fileUrl = canhoto.image_url; 
             const isImage = fileUrl && fileUrl.match(/\.(jpeg|jpg|png|gif)$/i);
             let imageContent = isImage ? `<img src="${fileUrl}" alt="Canhoto NF ${canhoto.nf}">` : `<div class="pdf-icon"><i class="fas fa-file-pdf"></i></div>`;
@@ -125,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     <div class="card-footer">
                         <button class="action-btn primary download-btn">
-                            <i class="fas fa-download"></i> 
+                            <i class="fas fa-download"></i>
                         </button>
                     </div>
                 </div>`;
@@ -139,7 +165,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 imageWrapper.addEventListener('click', () => window.open(fileUrl, '_blank'));
             }
             if(downloadBtn) {
-                downloadBtn.addEventListener('click', (e) => downloadFile(e, fileUrl));
+                // Adiciona o event listener, passando o NF para o nome do arquivo
+                downloadBtn.addEventListener('click', (e) => downloadFile(e, fileUrl, canhoto.nf));
             }
             canhotosGrid.appendChild(card);
         });
