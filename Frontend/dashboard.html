@@ -42,48 +42,49 @@
         /* --- ESTILOS ATUALIZADOS PARA O CARD --- */
         .canhoto-card {
             background-color: #ffffff;
-            border: 1px solid #e0e0e0; /* Borda visual */
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08); /* Sombra mais destacada */
-            display: flex;
-            flex-direction: column;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            display: flex; /* Mantém o card como um container flex */
+            flex-direction: column; /* Organiza os filhos em coluna */
             transition: transform 0.2s ease-in-out;
         }
         .canhoto-card:hover {
             transform: translateY(-5px); /* Efeito de elevação ao passar o mouse */
         }
         .card-image-wrapper {
-            aspect-ratio: 16 / 9; /* Proporção da imagem um pouco mais horizontal */
+            aspect-ratio: 16 / 9; /* Mantém a proporção fixa para a área da imagem */
             background-color: #f8f8f8;
             cursor: pointer;
-            padding: 10px; /* Diminui visualmente a foto com padding */
-            box-sizing: border-box; /* Garante que o padding não aumente o tamanho total */
+            overflow: hidden; /* Garante que a imagem não vaze para fora */
         }
         .card-image-wrapper img, .card-image-wrapper .pdf-icon {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* 'contain' para não cortar a imagem, 'cover' para preencher */
+            /* 'cover' preenche o espaço, cortando o excesso. Isso garante que a área da imagem tenha sempre o mesmo tamanho. */
+            object-fit: cover; 
             display: block;
         }
         .card-image-wrapper .pdf-icon {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4rem; /* Ícone menor, mais discreto */
+            font-size: 4rem;
             color: var(--red-kikos);
         }
         .card-info {
             padding: 15px;
-            flex-grow: 1;
+            /* 'flex-grow: 1' faz esta seção expandir para ocupar todo o espaço vertical disponível no card. */
+            flex-grow: 1; 
             display: flex;
             flex-direction: column;
-            text-align: center; /* Centraliza o texto */
+            justify-content: center; /* Centraliza o conteúdo verticalmente na área de info */
+            text-align: center;
         }
         .card-info h3 { margin: 0 0 8px 0; font-size: 1.1rem; font-weight: bold; color: #333; }
         .card-info p { margin: 2px 0; font-size: 0.85rem; color: #666; }
         .card-footer { 
-            margin-top: auto; 
             padding: 10px 15px 15px; 
             border-top: 1px solid #f0f0f0; 
             display: flex; 
