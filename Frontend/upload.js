@@ -64,9 +64,7 @@ uploadForm.addEventListener('submit', async (event) => {
         showPageMessage('message', 'Canhoto enviado com sucesso!', 'text-green-600');
         uploadForm.reset();
 
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 2000);
+        // A linha que redirecionava foi removida daqui.
 
     } catch (error) {
         console.error('Erro no upload:', error);
